@@ -1,5 +1,7 @@
 package Storm;
 
+import Storm.AMQPHandler.AMQPSpout;
+import Storm.AMQPHandler.ParseAMQPBolt;
 import com.google.common.collect.Lists;
 import org.apache.storm.jdbc.bolt.JdbcInsertBolt;
 import org.apache.storm.jdbc.common.Column;
@@ -21,7 +23,10 @@ import java.util.Map;
 public class StormBase {
     public static void main(String[] args) {
         //AMQP Spout
+        AMQPSpout amqpSpout = new AMQPSpout("localhost",
+                5672, "/", "guest", "guest", "mi-item-created");
 
+        ParseAMQPBolt parseAMQPBolt = new ParseAMQPBolt();
 
         // Construct JDBC Persistence
         Map<String, Object> configMap = new HashMap<>();
@@ -32,7 +37,6 @@ public class StormBase {
         configMap.put("dataSource.password", "root");
         ConnectionProvider connectionProvider = new HikariCPConnectionProvider(configMap);
 
-        String tableName = "user_details";
         List<Column> columns = Lists.newArrayList(new Column("column1", Types.INTEGER));
         JdbcMapper simpleJdbcMapper = new SimpleJdbcMapper(columns);
 
@@ -47,9 +51,9 @@ public class StormBase {
 
         TopologyBuilder builder = new TopologyBuilder();
 
-        builder.setSpout(null);
-        builder.setBolt("lookupbolt");
-        builder.setBolt("persistencebolt");
+        builder.setSpout("AMQPSpout", amqpSpout);
+        builder.setBolt("parse_amqp_bolt", parseAMQPBolt);
+//        builder.setBolt("persistencebolt");
         builder.createTopology();
 
 
@@ -59,4 +63,3 @@ public class StormBase {
 }
 
 
-}

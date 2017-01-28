@@ -8,9 +8,11 @@ import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Fields;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by Charlie on 28/01/2017.
@@ -32,7 +34,9 @@ public class AMQPSpout implements IRichSpout {
     private transient boolean active = true;
     private transient Connection connection;
     private transient Channel channel;
-    private transient QueueingConsumer consumer;
+    private transient Consumer consumer;
+
+    private ArrayList<Delivery> deliveries = new ArrayList<>();
 
 
     public AMQPSpout(String host, int port, String vhost, String username, String password, String queue) {
@@ -50,14 +54,14 @@ public class AMQPSpout implements IRichSpout {
         this.outputCollector = spoutOutputCollector;
         try {
             setUpConnection();
-        } catch (IOException e) {
+        } catch (IOException | TimeoutException e) {
             e.printStackTrace();
             // reconnect
         }
 
     }
 
-    private void setUpConnection() throws IOException {
+    private void setUpConnection() throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(host);
         factory.setPort(port);
@@ -70,7 +74,14 @@ public class AMQPSpout implements IRichSpout {
         System.out.println("AMQPSpout: Queue Declared and awaiting messages..");
 
 
-        consumer = new QueueingConsumer(channel);
+        consumer = new DefaultConsumer(channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                Delivery delivery = new Delivery(envelope.getDeliveryTag(), body);
+                deliveries.add(delivery);
+                channel.basicAck(envelope.getDeliveryTag(), true);
+            }
+        };
         channel.basicConsume(queue, true, consumer);
 
     }
@@ -93,19 +104,19 @@ public class AMQPSpout implements IRichSpout {
     @Override
     public void nextTuple() {
 
+        final Delivery delivery = deliveries.remove(deliveries.size() - 1);
+        if (delivery == null) return;
+
+        List<Object> output = new ArrayList<>();
         try {
-            final QueueingConsumer.Delivery delivery = consumer.nextDelivery();
-            if (delivery == null) return;
-
-            List<Object> output = new ArrayList<>();
-            final long deliveryTag = delivery.getEnvelope().getDeliveryTag();
-            output.add(delivery.getBody());
-
-            outputCollector.emit("amqp_spout", output);
-
-        } catch (InterruptedException e) {
+            String msgBody = new String(delivery.getBody(), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
+
+        output.add(delivery.getBody());
+
+        outputCollector.emit("amqp_spout", output);
 
 
     }
@@ -130,5 +141,24 @@ public class AMQPSpout implements IRichSpout {
     @Override
     public Map<String, Object> getComponentConfiguration() {
         return null;
+    }
+
+
+    class Delivery {
+        long deliveryTag;
+        byte[] body;
+
+        Delivery(long deliveryTag, byte[] body) {
+            this.deliveryTag = deliveryTag;
+            this.body = body;
+        }
+
+        long getDeliveryTag() {
+            return deliveryTag;
+        }
+
+        byte[] getBody() {
+            return body;
+        }
     }
 }
