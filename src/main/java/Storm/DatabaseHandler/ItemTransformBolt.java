@@ -23,7 +23,7 @@ public class ItemTransformBolt implements IRichBolt {
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
-        this.context = context;
+        this.context = topologyContext;
         this.outputCollector = outputCollector;
 
     }
@@ -66,8 +66,9 @@ public class ItemTransformBolt implements IRichBolt {
         output.add(item.getRouteType());
 
         System.out.println("CF item transformed, emitting..");
-        outputCollector.emit(output);
+        outputCollector.emit(tuple, output);
         // then persist item obj to db
+        outputCollector.ack(tuple);
     }
 
     @Override

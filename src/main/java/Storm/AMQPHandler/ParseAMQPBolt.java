@@ -40,7 +40,7 @@ public class ParseAMQPBolt implements IRichBolt {
 
         Item item = new Item();
 
-        System.out.println("CF " + JsonPath.parse(msgBody).read("$.payload"));
+//        System.out.println("CF " + JsonPath.parse(msgBody).read("$.payload"));
 
         String payload = JsonPath.parse(msgBody).read("$.payload");
 
@@ -67,17 +67,19 @@ public class ParseAMQPBolt implements IRichBolt {
 
         // Field Specific grouping
         // To lookup classes
-        outputCollector.emit(output);
+        outputCollector.emit(tuple, output);
+
+        outputCollector.ack(tuple);
     }
 
     private String parseByPath(String msg, String path) {
         String payload = "$";
         try {
             return JsonPath.parse(msg).read(payload + path);
-        } catch(PathNotFoundException e) {
+        } catch (PathNotFoundException e) {
             System.out.println("CF CAUGHT EXCEPTION");
             System.out.println("CF " + e.getMessage());
-            if(e.getMessage().contains("'null")) { // Null value in JSON - valid, handle properly
+            if (e.getMessage().contains("'null")) { // Null value in JSON - valid, handle properly
                 return null;
             } else {
                 e.printStackTrace();

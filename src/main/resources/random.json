@@ -1,0 +1,172 @@
+"lineItemViews":[  
+{
+      "id":"ITEM_BARCODE_A",
+      "parameters":null,
+      "parentId":null,
+      "type":null,
+      "subType":null,
+      "clazz":null,
+      "subClass":null,
+      "source":null,
+      "locationRef":null,
+      "qtyDec":null,
+      "qty":null,
+      "uoM":null,
+      "rank":null,
+      "cost":null,
+      "serialNum":null,
+      "scanCode":null,
+      "assetRef":null,
+      "attachReves":[],
+      "desc":null      
+}
+],
+    "source":"MI-Test",
+    "reference":"AEitem_20161115_6",
+    "eventDate":"2016-11-15T01:19:50.878Z",
+    "submitDate":"2016-11-14T01:15:50.878Z",
+    "createDate":"2016-11-15T01:19:50.878Z",
+    "updateDate":"2016-11-15T01:19:50.878Z",
+    "timezone":"Europe/London",
+    "updateId":null,
+    "wfver":null,
+    "wfapp":null,
+    "class":"PARCEL",
+    "subClass":"DELIVERY",
+    "type":"D",
+    "subType":"15",
+    "description":null,
+    "parameters":{  
+      "ParcelId":"004426066",
+      "CollectionId":"",
+      "ClientId":"0103",
+      "CatInd":"false",
+      "Hanging":"true",
+      "ConsignedPaper":"true",
+      "POD":"true",
+      "ManifestMsg":"LEAVE PCL IN PORCH",
+      "SystemMsg":"No Issues",
+      "SpecialIns1":"Blind Customer",
+      "SpecialIns2":"",
+      "StatedDay":"5",
+      "StatedTime":"10",
+      "SortLevel1":"81",
+      "SortLevel2":"01",
+      "SortLevel3":"25",
+      "SortLevel4":"8661",
+      "Consigned":"N",
+      "ConsignedPIN":"Y",
+      "AddService3":"N",
+      "StoreDelivery":"N",
+      "AddService5":"N",
+      "AddService6":"N",
+      "AddService7":"N",
+      "AddService8":"N",
+      "AddService9":"N",
+      "AddService10":"N",
+      "ConsignedPINCode":"4321",
+      "UpdateAckTrackingPoint":"DV023",
+      "Skeleton":"false"
+}
+},
+  "contactDetails":{  
+    "ref":null,
+    "primary":null,
+    "name":"Mr Alanna Edwards",
+    "contacts":{  
+      "TELHOME":[  
+"01254885662"
+],
+      "TELMOBILE":[  
+"07789546258"
+],
+      "TELWORK":[  
+"01635845796"
+]   
+},
+    "parameters":null,
+    "description":null
+},
+  "order":null,
+  "customerLocation":{  
+    "name":null,
+    "reference":null,
+    "primary":null,
+    "parentLocationReference":null,
+    "address":{  
+      "line1":"18 Random road",
+      "line2":"Random town",
+      "line3":"Random city",
+      "city":null,
+      "county":null,
+      "postCode":"PO1 1XY",
+      "country":null   
+},
+    "geographicCoordinates":{  
+      "latitude":52.0244,
+      "longitude":-1.0442,
+      "validity":"VALID",
+      "fixDate":null,
+      "sats":null,
+      "hdop":null,
+      "hAcc":null,
+      "src":null   
+},
+    "poorConnectivity":null,
+    "locationDetails":null,
+    "description":null,
+    "parameters":{  
+      "AddrLine4":"Non Random province",
+      "AddrLine5":"",
+      "AddrLine6":"",
+      "GeoFenceRadius":"1000",
+      "GeoFenceTimeout":"10"
+}
+},
+  "divertedLocation":{  
+    "name":null,
+    "reference":null,
+    "primary":null,
+    "parentLocationReference":null,
+    "address":{  
+      "line1":"20 Random road",
+      "line2":"Random town",
+      "line3":"Random city",
+      "city":null,
+      "county":null,
+      "postCode":"PO1 1XY",
+      "country":null   
+},
+    "geographicCoordinates":{  
+      "latitude":52.0244,
+      "longitude":-1.0442,
+      "validity":"VALID",
+      "fixDate":null,
+      "sats":null,
+      "hdop":null,
+      "hAcc":null,
+      "src":null   
+},
+    "poorConnectivity":null,
+    "locationDetails":null,
+    "description":null,
+    "parameters":{  
+      "AddrLine4":"Random province",
+      "AddrLine5":"",
+      "AddrLine6":"",
+      "GeoFenceRadius":"1000",
+      "GeoFenceTimeout":"10"
+}
+},
+  "parcelShopLocation":null,
+  "branchLocation":null,
+  "status":{  
+    "code":"ACTIVE",
+    "reason":null,
+    "reasonText":"Customer requested delivery to neighbour"
+},
+  "routeReference":"900205",
+  "routeType":"ROUND",
+  "customer":null
+}
+]

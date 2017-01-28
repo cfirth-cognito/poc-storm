@@ -112,7 +112,7 @@ public class AMQPSpout implements IRichSpout {
             String msgBody = "";
             try {
                 msgBody = new String(delivery.getBody(), "UTF-8");
-                System.out.println("CF got msg " + msgBody);
+//                System.out.println("CF got msg " + msgBody);
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }

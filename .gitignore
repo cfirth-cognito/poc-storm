@@ -50,3 +50,17 @@ Temporary Items
 *.xml
 .idea/libraries/Maven__net_minidev_json_smart_2_2_1.xml
 .idea/dataSources/82c9ba38-a1a3-4b97-8688-45b6bfb61f02/_metadata_/metadata
+
+\.idea/dataSources/82c9ba38-a1a3-4b97-8688-45b6bfb61f02/_metadata_/
+
+\.idea/libraries/
+
+\.idea/
+
+poc-storm\.iml
+
+*.class
+
+target/classes/
+
+*.iml
