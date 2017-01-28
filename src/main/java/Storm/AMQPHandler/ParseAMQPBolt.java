@@ -1,10 +1,8 @@
 package Storm.AMQPHandler;
 
 import Storm.AMQPHandler.JSONObj.Item.Item;
-import Storm.AMQPHandler.JSONObj.Item.ItemPayload;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
@@ -12,7 +10,6 @@ import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,31 +36,54 @@ public class ParseAMQPBolt implements IRichBolt {
         /* Include Type in tuple. switch() this method based on type, to parse the correct msgtype, and emit it */
         String msgBody = tuple.getStringByField("body");
 
+        System.out.println("CF Parsing AMQP message..");
+
         Item item = new Item();
-        item.setReference(parseByPath(msgBody, ".itemMetadata.reference"));
-        item.setItemClass(parseByPath(msgBody, ".itemMetadata.class"));
-        item.setItemSubClass(parseByPath(msgBody, ".itemMetadata.subclass"));
-        item.setCustomerName(parseByPath(msgBody, ".itemMetadata"));
-        item.setCustomerName(parseByPath(msgBody, "$.contactDetails.name"));
-        item.setClient(parseByPath(msgBody, "$.itemMetadata.parameters.ClientId"));
-        item.setStatedDay(parseByPath(msgBody, "$.itemMetadata.parameters.StatedDay"));
-        item.setStatedTime(parseByPath(msgBody, "$.itemMetadata.parameters.StatedTime"));
-        item.setEventDate(parseByPath(msgBody, "$.itemMetadata.eventDate"));
-        item.setRouteRef(parseByPath(msgBody, "$.routeReference"));
-        item.setRouteType(parseByPath(msgBody, "$.routeType"));
-        item.setLineItemId(parseByPath(msgBody, "$.itemMetadata.lineItemViews&#x5b;0&#x5d;.id"));
-        item.setCustAddr(parseByPath(msgBody, "$.customerLocation.address.line1"));
-        item.setPostcode(parseByPath(msgBody, "$.customerLocation.address.postCode"));
-        item.setShopReference(parseByPath(msgBody, "$.parcelShopLocation.reference"));
+
+        System.out.println("CF " + JsonPath.parse(msgBody).read("$.payload"));
+
+        String payload = JsonPath.parse(msgBody).read("$.payload");
+
+        item.setReference(parseByPath(payload, ".itemMetadata.reference"));
+        item.setItemClass(parseByPath(payload, ".itemMetadata.class"));
+        item.setItemSubClass(parseByPath(payload, ".itemMetadata.subClass"));
+        item.setCustomerName(parseByPath(payload, ".contactDetails.name"));
+        item.setClient(parseByPath(payload, ".itemMetadata.parameters.ClientId"));
+        item.setStatedDay(parseByPath(payload, ".itemMetadata.parameters.StatedDay"));
+        item.setStatedTime(parseByPath(payload, ".itemMetadata.parameters.StatedTime"));
+        item.setEventDate(parseByPath(payload, ".itemMetadata.eventDate"));
+        item.setRouteRef(parseByPath(payload, ".routeReference"));
+        item.setRouteType(parseByPath(payload, ".routeType"));
+        item.setLineItemId(parseByPath(payload, ".itemMetadata.lineItemViews[0].id"));
+        item.setCustAddr(parseByPath(payload, ".customerLocation.address.line1"));
+        item.setPostcode(parseByPath(payload, ".customerLocation.address.postCode"));
+        item.setShopReference(parseByPath(payload, ".parcelShopLocation.reference"));
         List<Object> output = new ArrayList<>();
         output.add(item);
         System.out.println(item);
-        outputCollector.emit("parse_amqp", output);
+        System.out.println(item.toString());
+
+        System.out.println("CF Item created.");
+
+        // Field Specific grouping
+        // To lookup classes
+        outputCollector.emit(output);
     }
 
     private String parseByPath(String msg, String path) {
-        String payload = "$.payload";
-        return JsonPath.parse(msg).read(payload + path);
+        String payload = "$";
+        try {
+            return JsonPath.parse(msg).read(payload + path);
+        } catch(PathNotFoundException e) {
+            System.out.println("CF CAUGHT EXCEPTION");
+            System.out.println("CF " + e.getMessage());
+            if(e.getMessage().contains("'null")) { // Null value in JSON - valid, handle properly
+                return null;
+            } else {
+                e.printStackTrace();
+            }
+        }
+        return null;
     }
 
 

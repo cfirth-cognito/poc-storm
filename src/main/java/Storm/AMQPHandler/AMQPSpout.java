@@ -70,19 +70,20 @@ public class AMQPSpout implements IRichSpout {
         factory.setPassword(password);
         connection = factory.newConnection();
         channel = connection.createChannel();
-        channel.queueDeclare(queue, false, false, false, null);
-        System.out.println("AMQPSpout: Queue Declared and awaiting messages..");
+        channel.queueDeclare(queue, true, false, false, null);
+        System.out.println("CF AMQPSpout: Queue Declared and awaiting messages..");
 
 
         consumer = new DefaultConsumer(channel) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                 Delivery delivery = new Delivery(envelope.getDeliveryTag(), body);
+                System.out.println("CF received msg " + envelope.getDeliveryTag());
                 deliveries.add(delivery);
-                channel.basicAck(envelope.getDeliveryTag(), true);
+                channel.basicAck(envelope.getDeliveryTag(), false);
             }
         };
-        channel.basicConsume(queue, true, consumer);
+        channel.basicConsume(queue, false, consumer);
 
     }
 
@@ -103,20 +104,23 @@ public class AMQPSpout implements IRichSpout {
 
     @Override
     public void nextTuple() {
-
-        final Delivery delivery = deliveries.remove(deliveries.size() - 1);
-        if (delivery == null) return;
-
         List<Object> output = new ArrayList<>();
-        try {
-            String msgBody = new String(delivery.getBody(), "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+
+        if (deliveries.size() > 1) {
+            final Delivery delivery = deliveries.remove(deliveries.size() - 1);
+            if (delivery == null) return;
+            String msgBody = "";
+            try {
+                msgBody = new String(delivery.getBody(), "UTF-8");
+                System.out.println("CF got msg " + msgBody);
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            output.add(msgBody);
+        } else {
+            return;
         }
-
-        output.add(delivery.getBody());
-
-        outputCollector.emit("amqp_spout", output);
+        outputCollector.emit(output);
 
 
     }
