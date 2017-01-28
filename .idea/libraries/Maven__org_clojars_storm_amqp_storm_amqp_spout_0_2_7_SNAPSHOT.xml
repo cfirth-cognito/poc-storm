@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.clojars.storm-amqp:storm-amqp-spout:0.2.7-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/clojars/storm-amqp/storm-amqp-spout/0.2.7-SNAPSHOT/storm-amqp-spout-0.2.7-20130919.195932-2.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/clojars/storm-amqp/storm-amqp-spout/0.2.7-SNAPSHOT/storm-amqp-spout-0.2.7-20130919.195932-2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/clojars/storm-amqp/storm-amqp-spout/0.2.7-SNAPSHOT/storm-amqp-spout-0.2.7-20130919.195932-2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
