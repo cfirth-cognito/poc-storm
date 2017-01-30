@@ -118,7 +118,7 @@ public class AMQPSpout implements IRichSpout {
     @Override
     public void nextTuple() {
         Values emitValues = new Values();
-        if (deliveries.size() > 1) {
+        if (deliveries.size() > 0) {
             final Delivery delivery = deliveries.remove(deliveries.size() - 1);
             if (delivery == null) return;
             String msgBody = "";

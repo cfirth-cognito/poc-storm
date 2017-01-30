@@ -36,9 +36,21 @@ public class Item {
     }
 
     public static String columnsToString() {
-        return "inv_item_ref, inv_item_class, inv_item_subclass, inv_item_status, " +
-                "inv_item_class_display, inv_item_subclass_display, inv_item_status_display, " +
-                " barcode, stated_day, stated_time, client, customer_name, customer_address_1," +
-                "version, event_date, schedule_mgmt_id, postcode, client_id, route_type";
+        String columnString = "";
+        for (Column col : columns) {
+            if (columns.indexOf(col) != columns.size())
+                columnString += col.getColumnName() + ",";
+            else
+                columnString += col.getColumnName();
+        }
+        return columnString;
+    }
+
+    public static String getPlaceholders() {
+        String placeholders = "";
+        for (int i = 0; i < columns.size(); i++) {
+            placeholders += "?,";
+        }
+        return placeholders.substring(0, placeholders.lastIndexOf(","));
     }
 }

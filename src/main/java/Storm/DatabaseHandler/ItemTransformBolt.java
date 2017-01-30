@@ -31,6 +31,7 @@ public class ItemTransformBolt implements IRichBolt {
         Transformer transformer = new Transformer();
         Values emitValues;
         System.out.println(tuple.getValues());
+        System.out.println(String.format("Transforming %s", tuple.getMessageId().toString()));
 
         // Can't do this atm. See @declareOutputFields
 //        switch (type) {

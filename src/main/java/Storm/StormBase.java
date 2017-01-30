@@ -3,6 +3,8 @@ package Storm;
 import Storm.AMQPHandler.AMQPSpout;
 import Storm.AMQPHandler.ParseAMQPBolt;
 import Storm.DatabaseHandler.DBObjects.Item;
+import Storm.DatabaseHandler.DBObjects.ItemState;
+import Storm.DatabaseHandler.ItemStateTransformBolt;
 import Storm.DatabaseHandler.ItemTransformBolt;
 import Storm.ErrorHandler.ErrorBolt;
 import com.google.common.collect.Lists;
@@ -45,9 +47,11 @@ public class StormBase {
 
         ParseAMQPBolt parseAMQPBolt = new ParseAMQPBolt();
         ItemTransformBolt itemTransformBolt = new ItemTransformBolt();
+        ItemStateTransformBolt itemStateTransformBolt = new ItemStateTransformBolt();
         JdbcInsertBolt itemPersistenceBolt = new JdbcInsertBolt(connectionProvider, simpleJdbcMapper)
-                .withInsertQuery("insert into inv_item_d (" + Item.columnsToString() + ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+                .withInsertQuery("insert into inv_item_d (" + Item.columnsToString() + ") values (" + Item.getPlaceholders() + ")")
                 .withQueryTimeoutSecs(30);
+
 
         ErrorBolt errorBolt = new ErrorBolt();
 
@@ -58,6 +62,22 @@ public class StormBase {
                 .shuffleGrouping("parse_amqp_bolt", "item");
         builder.setBolt("persist_bolt", itemPersistenceBolt)
                 .shuffleGrouping("item_transform_bolt");
+        builder.setBolt("item_state_transform_bolt", itemStateTransformBolt)
+                .shuffleGrouping("item_transform_bolt", "item");
+
+
+
+
+
+        JdbcInsertBolt itemStatePersistenceBolt = new JdbcInsertBolt(connectionProvider, simpleJdbcMapper)
+                .withInsertQuery("insert into inv_item_state_f (" + ItemState.columnsToString() + ") values (" + ItemState.getPlaceholders() + ")")
+                .withQueryTimeoutSecs(30);
+
+
+
+
+
+
 
 
         /* Error Handling */

@@ -1,11 +1,10 @@
 package Storm.DatabaseHandler;
 
 import Storm.AMQPHandler.JSONObj.Item.Item;
+import Storm.AMQPHandler.JSONObj.Item.ItemState;
 import org.apache.storm.tuple.Values;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by charlie on 30/01/17.
@@ -66,6 +65,65 @@ public class Transformer {
         output.add(item.getPostcode());
         output.add(item.getClientId());
         output.add(item.getRouteType());
+
+        // return item as list of fields
+        return output;
+    }
+
+    Values transformItemCreatedState(ItemState itemState) {
+        System.out.println("[LOG] Transforming Item now..");
+
+        try {
+
+
+            itemState.setItemClassId(LookupHandler.lookupId("inv_item_state_type_d", "class", itemState.getItemStateClass()));
+            itemState.setItemStateClassId(LookupHandler.lookupId("inv_item_state_type_d", "subclass", itemState.getItemStateSubClass()));
+            itemState.setStatusId(LookupHandler.lookupId("inv_item_status_type_d", "class", itemState.getStatus()));
+            itemState.setStateDateId(LookupHandler.lookupId("date_d", "date",
+                    itemState.getStateDateTimeLocal().substring(0, itemState.getStateDateTimeLocal().indexOf("T"))));
+            itemState.setStateTimeId(LookupHandler.lookupId("time_d", "time",
+                    itemState.getStateDateTimeLocal().substring(itemState.getStateDateTimeLocal().indexOf("T"), itemState.getStateDateTimeLocal().indexOf("Z"))));
+            itemState.setRouteTypeId(LookupHandler.lookupId("route_type_d", "route_type_display", itemState.getRouteType()));
+
+
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
+
+        itemState.setStateDateTimeLocal(itemState.getStateDateTimeLocal().replace("Z", "").replace("T", " "));
+
+        Values output = new Values();
+        output.add(itemState.getReference());
+        output.add(itemState.getStateDateTimeLocal());
+        output.add(itemState.getStateDateId());
+        output.add(itemState.getStateTimeId());
+        output.add(itemState.getMessageRef());
+
+        /* Gotta get the ItemID somehow.. */
+        output.add(itemState.getItemId());
+
+        output.add(itemState.getListId());
+        output.add(itemState.getListRef());
+        output.add(itemState.getItemClassId());
+        output.add(itemState.getItemStateClassId());
+        output.add(itemState.getResourceId());
+        output.add(itemState.getScheduleId());
+        output.add(itemState.getNetworkId());
+        output.add(itemState.getGeographyId());
+        output.add(itemState.getStateCounter());
+
+        output.add(itemState.getBeginDate()); // begin date ID!!
+        
+        output.add(itemState.getEtaStartDate());
+        output.add(itemState.getEtaEndDate());
+        output.add(itemState.getAdditionalInfo());
+        output.add(itemState.getStatusId());
+        output.add(itemState.getManifestedId());
+        output.add(itemState.getTrackingPointId());
+        output.add(itemState.getRouteTypeId());
+        output.add(itemState.getFromShopId());
+        output.add(itemState.getToShopId());
+        output.add(itemState.getBillingRef());
 
         // return item as list of fields
         return output;

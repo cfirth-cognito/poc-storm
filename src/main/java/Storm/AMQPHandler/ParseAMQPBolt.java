@@ -31,7 +31,7 @@ public class ParseAMQPBolt implements IRichBolt {
         Values emitValues = new Values();
         String msgBody = tuple.getStringByField("body");
 
-        System.out.println("[LOG] Parsing AMQP message..");
+        System.out.println(String.format("[LOG] Parsing AMQP message %s..", tuple.getMessageId().toString()));
 
         switch (tuple.getSourceStreamId()) {
             case "item":
