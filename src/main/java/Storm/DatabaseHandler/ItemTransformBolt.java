@@ -66,7 +66,7 @@ public class ItemTransformBolt implements IRichBolt {
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declare(new Fields("inv_item_ref", "inv_item_class", "inv_item_subclass", "inv_item_status", "inv_item_class_display",
                 "inv_item_subclass_display", "inv_item_status_display", "barcode", "stated_day"
-                , "stated_time", "client", "customer_name", "customer_address_1", "version", "event_date", "postcode", "route_type"));
+                , "stated_time", "client", "customer_name", "customer_address_1", "version", "event_date", "schedule_mgmt_id", "postcode", "client_id", "route_type"));
 
     }
 

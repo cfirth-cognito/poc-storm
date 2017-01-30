@@ -8,6 +8,8 @@ public class Item {
     private String reference;
     private String itemClass;
     private String itemSubClass;
+    private String itemClassDisplay;
+    private String itemSubClassDisplay;
     private String customerName;
     private String status;
     private String client;
@@ -20,8 +22,35 @@ public class Item {
     private String custAddr;
     private String postcode;
     private String shopReference;
+    private int scheduleId;
+    private int resourceId;
+    private int clientId;
 
     public Item() {
+    }
+
+    public int getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(int clientId) {
+        this.clientId = clientId;
+    }
+
+    public String getItemClassDisplay() {
+        return itemClassDisplay;
+    }
+
+    public void setItemClassDisplay(String itemClassDisplay) {
+        this.itemClassDisplay = itemClassDisplay;
+    }
+
+    public String getItemSubClassDisplay() {
+        return itemSubClassDisplay;
+    }
+
+    public void setItemSubClassDisplay(String itemSubClassDisplay) {
+        this.itemSubClassDisplay = itemSubClassDisplay;
     }
 
     public String getReference() {
@@ -142,5 +171,21 @@ public class Item {
 
     public void setShopReference(String shopReference) {
         this.shopReference = shopReference;
+    }
+
+    public int getScheduleId() {
+        return scheduleId;
+    }
+
+    public void setScheduleId(int scheduleId) {
+        this.scheduleId = scheduleId;
+    }
+
+    public int getResourceId() {
+        return resourceId;
+    }
+
+    public void setResourceId(int resourceId) {
+        this.resourceId = resourceId;
     }
 }

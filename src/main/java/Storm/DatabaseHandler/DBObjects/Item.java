@@ -26,7 +26,9 @@ public class Item {
             new Column("customer_address_1", Types.VARCHAR),
             new Column("version", Types.INTEGER),
             new Column("event_date", Types.VARCHAR),
+            new Column("schedule_mgmt_id", Types.INTEGER),
             new Column("postcode", Types.VARCHAR),
+            new Column("client_id", Types.INTEGER),
             new Column("route_type", Types.VARCHAR));
 
     public static List<Column> getColumns() {
@@ -37,6 +39,6 @@ public class Item {
         return "inv_item_ref, inv_item_class, inv_item_subclass, inv_item_status, " +
                 "inv_item_class_display, inv_item_subclass_display, inv_item_status_display, " +
                 " barcode, stated_day, stated_time, client, customer_name, customer_address_1," +
-                "version, event_date, postcode, route_type";
+                "version, event_date, schedule_mgmt_id, postcode, client_id, route_type";
     }
 }
