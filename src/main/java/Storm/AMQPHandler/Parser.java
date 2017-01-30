@@ -18,6 +18,7 @@ public class Parser {
         item.setItemClass(parseByPath(payload, ".itemMetadata.class"));
         item.setItemSubClass(parseByPath(payload, ".itemMetadata.subClass"));
         item.setCustomerName(parseByPath(payload, ".contactDetails.name"));
+        item.setStatus("test");
         item.setClient(parseByPath(payload, ".itemMetadata.parameters.ClientId"));
         item.setStatedDay(parseByPath(payload, ".itemMetadata.parameters.StatedDay"));
         item.setStatedTime(parseByPath(payload, ".itemMetadata.parameters.StatedTime"));
@@ -30,6 +31,31 @@ public class Parser {
         item.setShopReference(parseByPath(payload, ".parcelShopLocation.reference"));
 
         return item;
+    }
+
+    // Can do this in the Setters of the various Objects themselves.
+    // Doing it here for now, for visibility
+    String validateItem(Item item) {
+        if (item.getReference() == null)
+            return "Reference failed validation";
+        if (item.getItemClass() == null)
+            return "Class failed validation";
+        if (item.getItemSubClass() == null)
+            return "SubClass failed validation";
+        if (item.getCustomerName() == null)
+            return "CustomerName failed validation";
+        if (item.getStatus() == null)
+            return "Status failed validation";
+        if (item.getClient() == null)
+            return "Client failed validation";
+        if (item.getEventDate() == null)
+            return "EventDate failed validation";
+        if (item.getRouteRef() == null)
+            return "RouteRef failed validation";
+        if (item.getRouteType() == null)
+            return "RouteType failed validation";
+
+        return null;
     }
 
     private String parseByPath(String msg, String path) {

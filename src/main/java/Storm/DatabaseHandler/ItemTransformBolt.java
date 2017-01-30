@@ -9,9 +9,6 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,22 +17,20 @@ import java.util.Map;
 public class ItemTransformBolt implements IRichBolt {
 
     TopologyContext context;
-    OutputCollector outputCollector;
+    OutputCollector _collector;
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
         this.context = topologyContext;
-        this.outputCollector = outputCollector;
+        this._collector = outputCollector;
 
     }
 
     @Override
     public void execute(Tuple tuple) {
         Transformer transformer = new Transformer();
-        Values emitValues = new Values();
-        String type = tuple.getStringByField("type");
-
-        emitValues.add(type);
+        Values emitValues;
+        System.out.println(tuple.getValues());
 
         // Can't do this atm. See @declareOutputFields
 //        switch (type) {
@@ -46,11 +41,11 @@ public class ItemTransformBolt implements IRichBolt {
 //        }
 
         Item item = (Item) tuple.getValueByField("item");
-        emitValues.add(transformer.transformItem(item));
+        emitValues = transformer.transformItem(item);
 
         System.out.println("[LOG] JSON transformed, emitting..");
-        outputCollector.emit(tuple, emitValues);
-        outputCollector.ack(tuple);
+        _collector.emit(tuple, emitValues);
+        _collector.ack(tuple);
     }
 
     @Override

@@ -11,7 +11,6 @@ import org.apache.storm.tuple.Values;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -19,7 +18,7 @@ import java.util.concurrent.TimeoutException;
  * Created by Charlie on 28/01/2017.
  */
 public class AMQPSpout implements IRichSpout {
-    private SpoutOutputCollector outputCollector;
+    private SpoutOutputCollector _collector;
     private TopologyContext context;
 
 
@@ -53,7 +52,7 @@ public class AMQPSpout implements IRichSpout {
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
         this.context = topologyContext;
-        this.outputCollector = spoutOutputCollector;
+        this._collector = spoutOutputCollector;
         try {
             setUpConnection();
         } catch (IOException | TimeoutException e) {
@@ -133,10 +132,9 @@ public class AMQPSpout implements IRichSpout {
                 e.printStackTrace();
             }
 
-            emitValues.add(type);
             emitValues.add(msgBody);
 
-            outputCollector.emit(emitValues, deliveryTag);
+            _collector.emit("item", emitValues, deliveryTag);
         }
     }
 
@@ -163,7 +161,10 @@ public class AMQPSpout implements IRichSpout {
     // Declares fields to output from spout
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("type", "body"));
+        // Decalare Message Type specific streams:
+//        outputFieldsDeclarer.declareStream("item-stream", new Fields("type", "body"));
+
+        outputFieldsDeclarer.declareStream("item", new Fields("body"));
     }
 
     @Override

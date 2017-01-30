@@ -1,5 +1,6 @@
 package Storm.AMQPHandler;
 
+import Storm.AMQPHandler.JSONObj.Item.Item;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
@@ -16,15 +17,12 @@ import java.util.Map;
 public class ParseAMQPBolt implements IRichBolt {
 
     private TopologyContext context;
-    private OutputCollector outputCollector;
-
-    private Fields fields;
-
+    private OutputCollector _collector;
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
         this.context = topologyContext;
-        this.outputCollector = outputCollector;
+        this._collector = outputCollector;
     }
 
     @Override
@@ -32,31 +30,36 @@ public class ParseAMQPBolt implements IRichBolt {
         Parser parser = new Parser();
         Values emitValues = new Values();
         String msgBody = tuple.getStringByField("body");
-        String type = tuple.getStringByField("type");
 
         System.out.println("[LOG] Parsing AMQP message..");
-        emitValues.add(type);
 
-        switch (type) {
+        switch (tuple.getSourceStreamId()) {
             case "item":
-                emitValues.add(parser.parseItem(msgBody));
+                Item item = parser.parseItem(msgBody);
+                System.out.println("[LOG] Validation: " + parser.validateItem(item));
+                if (parser.validateItem(item) == null)
+                    emitValues.add(item);
+                else {
+                    System.out.println("Item validation failed.");
+                    _collector.emit("ErrorStream", new Values(parser.validateItem(item)));
+//                    _collector.fail(tuple); // Failed validation.
+                }
                 break;
         }
-
         System.out.println("[LOG] JSON transformed to Object.");
 
-        outputCollector.emit(tuple, emitValues);
-        outputCollector.ack(tuple);
+        _collector.emit("item", tuple, emitValues);
+        _collector.ack(tuple);
     }
 
     @Override
     public void cleanup() {
-
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("item"));
+        outputFieldsDeclarer.declareStream("item", new Fields("item"));
+        outputFieldsDeclarer.declareStream("ErrorStream", new Fields("error_msg"));
     }
 
     @Override

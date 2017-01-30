@@ -4,6 +4,7 @@ import Storm.AMQPHandler.AMQPSpout;
 import Storm.AMQPHandler.ParseAMQPBolt;
 import Storm.DatabaseHandler.DBObjects.Item;
 import Storm.DatabaseHandler.ItemTransformBolt;
+import Storm.ErrorHandler.ErrorBolt;
 import com.google.common.collect.Lists;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.jdbc.bolt.JdbcInsertBolt;
@@ -45,17 +46,25 @@ public class StormBase {
         ParseAMQPBolt parseAMQPBolt = new ParseAMQPBolt();
         ItemTransformBolt itemTransformBolt = new ItemTransformBolt();
         JdbcInsertBolt itemPersistenceBolt = new JdbcInsertBolt(connectionProvider, simpleJdbcMapper)
-                .withInsertQuery("insert into inv_item_d (" + Item.columnsToString() + ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+                .withInsertQuery("insert into inv_item_d (" + Item.columnsToString() + ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
                 .withQueryTimeoutSecs(30);
 
+        ErrorBolt errorBolt = new ErrorBolt();
+
         builder.setSpout("AMQPSpout", amqpSpout);
-        // Use fieldsGrouping to ensure all "items" are sent to the same worker, all "item-states", etc.
         builder.setBolt("parse_amqp_bolt", parseAMQPBolt)
-                .fieldsGrouping("AMQPSpout", new Fields("type"));
+                .shuffleGrouping("AMQPSpout", "item");
         builder.setBolt("item_transform_bolt", itemTransformBolt)
-                .shuffleGrouping("parse_amqp_bolt");
+                .shuffleGrouping("parse_amqp_bolt", "item");
         builder.setBolt("persist_bolt", itemPersistenceBolt)
                 .shuffleGrouping("item_transform_bolt");
+
+
+        /* Error Handling */
+        /* Handle inserting errors to PDI_LOGGING, and failing the tuple gracefully */
+        /* TODO: database to log to     */
+        builder.setBolt("error_bolt", errorBolt)
+                .shuffleGrouping("parse_amqp_bolt", "ErrorStream");
 
         System.out.println("[LOG] Topology configured. Creating now..");
         builder.createTopology();

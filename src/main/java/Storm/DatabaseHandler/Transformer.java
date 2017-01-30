@@ -1,6 +1,7 @@
 package Storm.DatabaseHandler;
 
 import Storm.AMQPHandler.JSONObj.Item.Item;
+import org.apache.storm.tuple.Values;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ public class Transformer {
         or do it manually?
         perf test the two options
      */
-    List<Object> transformItem(Item item) {
+    Values transformItem(Item item) {
         System.out.println("[LOG] Transforming Item now..");
 
         try {
@@ -43,7 +44,9 @@ public class Transformer {
             e.printStackTrace();
         }
 
-        List<Object> output = new ArrayList<>();
+        item.setEventDate(item.getEventDate().replace("Z", "").replace("T", " "));
+
+        Values output = new Values();
         output.add(item.getReference());
         output.add(item.getItemClass());
         output.add(item.getItemSubClass());
@@ -54,7 +57,7 @@ public class Transformer {
         output.add(item.getReference());
         output.add(item.getStatedDay());
         output.add(item.getStatedTime());
-        output.add(item.getClientId());
+        output.add(item.getClient());
         output.add(item.getCustomerName());
         output.add(item.getCustAddr());
         output.add(1);
