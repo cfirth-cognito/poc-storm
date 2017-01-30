@@ -36,6 +36,7 @@ public class AMQPSpout implements IRichSpout {
     private transient Connection connection;
     private transient Channel channel;
     private transient Consumer consumer;
+    private transient String consumerTag;
 
     private ArrayList<Delivery> deliveries = new ArrayList<>();
 
@@ -82,37 +83,48 @@ public class AMQPSpout implements IRichSpout {
                 Delivery delivery = new Delivery(envelope.getDeliveryTag(), body, type);
                 System.out.println("[LOG] received msg " + envelope.getDeliveryTag());
                 deliveries.add(delivery);
-                channel.basicAck(envelope.getDeliveryTag(), false);
+//                channel.basicAck(envelope.getDeliveryTag(), false); // Acking here means no retry functionality.
             }
         };
-        channel.basicConsume(queue, false, consumer);
 
+        this.consumerTag = channel.basicConsume(queue, false, consumer);
     }
 
     @Override
     public void close() {
+        try {
+            if (channel != null) {
+                channel.basicCancel(consumerTag);
+            }
 
+            if (connection != null) {
+                connection.close();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
+
+    // Add pausing & un-pausing spout logic here.
     @Override
     public void activate() {
-
     }
 
     @Override
     public void deactivate() {
-
     }
 
     @Override
     public void nextTuple() {
         Values emitValues = new Values();
-
         if (deliveries.size() > 1) {
             final Delivery delivery = deliveries.remove(deliveries.size() - 1);
             if (delivery == null) return;
             String msgBody = "";
             String type = "";
+            long deliveryTag = delivery.getDeliveryTag();
 
             try {
                 msgBody = new String(delivery.getBody(), "UTF-8");
@@ -123,23 +135,30 @@ public class AMQPSpout implements IRichSpout {
 
             emitValues.add(type);
             emitValues.add(msgBody);
-        } else {
-            return;
-        }
 
-        outputCollector.emit(emitValues);
+            outputCollector.emit(emitValues, deliveryTag);
+        }
     }
 
     @Override
     public void ack(Object o) {
-
+        final long deliveryTag = (long) o;
+        if (channel != null) {
+            try {
+                System.out.println(String.format("[LOG] Acking message %d", deliveryTag));
+                channel.basicAck(deliveryTag, false);
+            } catch (IOException e) {
+                System.out.println(String.format("[LOG] Failed to ack delivery tag %d", deliveryTag));
+            } catch (ShutdownSignalException e) {
+                System.out.println(String.format("[LOG] Failed to connect to AMQP. Failed to ack delivery tag %d", deliveryTag));
+            }
+        }
     }
 
     @Override
     public void fail(Object o) {
-        // add fault-tolerance retry logic in here
+        // add fault-tolerant retry logic in here (avoid infinite loop while still trying a message atleast once)
     }
-
 
     // Declares fields to output from spout
     @Override

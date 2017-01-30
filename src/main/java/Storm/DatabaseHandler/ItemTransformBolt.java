@@ -55,7 +55,6 @@ public class ItemTransformBolt implements IRichBolt {
 
     @Override
     public void cleanup() {
-
     }
 
     // hmm
