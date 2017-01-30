@@ -15,6 +15,7 @@ import org.apache.storm.jdbc.mapper.SimpleJdbcLookupMapper;
 import org.apache.storm.jdbc.mapper.SimpleJdbcMapper;
 import org.apache.storm.scheduler.Cluster;
 import org.apache.storm.topology.TopologyBuilder;
+import org.apache.storm.tuple.Fields;
 
 import java.sql.Types;
 import java.util.HashMap;
@@ -76,8 +77,9 @@ public class StormBase {
         TopologyBuilder builder = new TopologyBuilder();
 
         builder.setSpout("AMQPSpout", amqpSpout);
+        // Use fieldsGrouping to ensure all "items" are sent to the same worker, all "item-states", etc.
         builder.setBolt("parse_amqp_bolt", parseAMQPBolt)
-                .shuffleGrouping("AMQPSpout");
+                .fieldsGrouping("AMQPSpout", new Fields("type"));
         builder.setBolt("item_transform_bolt", itemTransformBolt)
                 .shuffleGrouping("parse_amqp_bolt");
         builder.setBolt("persist_bolt", itemPersistanceBolt)

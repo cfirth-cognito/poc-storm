@@ -7,6 +7,7 @@ import org.apache.storm.topology.IRichBolt;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.Values;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -30,44 +31,25 @@ public class ItemTransformBolt implements IRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        // Read in a item obj
+        Transformer transformer = new Transformer();
+        Values emitValues = new Values();
+        String type = tuple.getStringByField("type");
+
+        emitValues.add(type);
+
+        // Can't do this atm. See @declareOutputFields
+//        switch (type) {
+//            case "item":
+//                Item item = (Item) tuple.getValueByField("item");
+//                emitValues.add(transformer.transformItem(item));
+//                break;
+//        }
+
         Item item = (Item) tuple.getValueByField("item");
-        // lookup needed fields
+        emitValues.add(transformer.transformItem(item));
 
-        System.out.println("CF Transforming Item now..");
-
-        try {
-            item.setItemClass(String.valueOf(LookupHandler.lookupId("inv_item_class_type_d", "class", item.getItemClass())));
-        } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
-        }
-
-        // factor out logic into seperate java class - this class then does the lookups?
-        // should I use storms lookup bolt? or do it manually?
-        // return item obj with transformed fields
-
-        List<Object> output = new ArrayList<>();
-        output.add(item.getReference());
-        output.add(item.getItemClass());
-        output.add(item.getItemSubClass());
-        output.add(item.getStatus());
-        output.add(item.getItemClass());
-        output.add(item.getItemSubClass());
-        output.add(item.getStatus());
-        output.add(item.getReference());
-        output.add(item.getStatedDay());
-        output.add(item.getStatedTime());
-        output.add(item.getClient());
-        output.add(item.getCustomerName());
-        output.add(item.getCustAddr());
-        output.add(1);
-        output.add(item.getEventDate());
-        output.add(item.getPostcode());
-        output.add(item.getRouteType());
-
-        System.out.println("CF item transformed, emitting..");
-        outputCollector.emit(tuple, output);
-        // then persist item obj to db
+        System.out.println("[LOG] JSON transformed, emitting..");
+        outputCollector.emit(tuple, emitValues);
         outputCollector.ack(tuple);
     }
 
@@ -76,6 +58,11 @@ public class ItemTransformBolt implements IRichBolt {
 
     }
 
+    // hmm
+    // this needs to match the columns we're inserting in the persist bolt, so we can't use (col1, col2) etc to make it generic
+    // ..unless we implement a custom JDBCMapper?
+    // also different messages will have a different number of fields to insert
+    // This also gets set when the topology is created, so we can't modify it dynamically depending on the msg we receive in the tuple
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declare(new Fields("inv_item_ref", "inv_item_class", "inv_item_subclass", "inv_item_status", "inv_item_class_display",

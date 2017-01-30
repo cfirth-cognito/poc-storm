@@ -17,7 +17,7 @@ public class LookupHandler {
     static Connection connection;
     static PreparedStatement stmt;
 
-    // Throw any exceptions we encounter. This ensure's the bolt is killed, and another bolt spun up to try again.
+    // Throw any exceptions we encounter. This ensure's the bolt worker is killed, and another bolt spun up to try again.
     static int lookupId(String table, String column, String value) throws ClassNotFoundException, SQLException {
         Class.forName("com.mysql.jdbc.Driver");
         if (connection == null) {

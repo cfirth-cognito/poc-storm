@@ -6,6 +6,7 @@ import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichSpout;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.Values;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -71,14 +72,15 @@ public class AMQPSpout implements IRichSpout {
         connection = factory.newConnection();
         channel = connection.createChannel();
         channel.queueDeclare(queue, true, false, false, null);
-        System.out.println("CF AMQPSpout: Queue Declared and awaiting messages..");
+        System.out.println("[LOG] AMQPSpout: Queue Declared and awaiting messages..");
 
 
         consumer = new DefaultConsumer(channel) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                Delivery delivery = new Delivery(envelope.getDeliveryTag(), body);
-                System.out.println("CF received msg " + envelope.getDeliveryTag());
+                String type = envelope.getRoutingKey().substring(0, envelope.getRoutingKey().lastIndexOf("-"));
+                Delivery delivery = new Delivery(envelope.getDeliveryTag(), body, type);
+                System.out.println("[LOG] received msg " + envelope.getDeliveryTag());
                 deliveries.add(delivery);
                 channel.basicAck(envelope.getDeliveryTag(), false);
             }
@@ -104,25 +106,28 @@ public class AMQPSpout implements IRichSpout {
 
     @Override
     public void nextTuple() {
-        List<Object> output = new ArrayList<>();
+        Values emitValues = new Values();
 
         if (deliveries.size() > 1) {
             final Delivery delivery = deliveries.remove(deliveries.size() - 1);
             if (delivery == null) return;
             String msgBody = "";
+            String type = "";
+
             try {
                 msgBody = new String(delivery.getBody(), "UTF-8");
-//                System.out.println("CF got msg " + msgBody);
+                type = delivery.getType();
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
-            output.add(msgBody);
+
+            emitValues.add(type);
+            emitValues.add(msgBody);
         } else {
             return;
         }
-        outputCollector.emit(output);
 
-
+        outputCollector.emit(emitValues);
     }
 
     @Override
@@ -132,14 +137,14 @@ public class AMQPSpout implements IRichSpout {
 
     @Override
     public void fail(Object o) {
-
+        // add fault-tolerance retry logic in here
     }
 
 
     // Declares fields to output from spout
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("body"));
+        outputFieldsDeclarer.declare(new Fields("type", "body"));
     }
 
     @Override
@@ -151,10 +156,12 @@ public class AMQPSpout implements IRichSpout {
     class Delivery {
         long deliveryTag;
         byte[] body;
+        String type;
 
-        Delivery(long deliveryTag, byte[] body) {
+        Delivery(long deliveryTag, byte[] body, String type) {
             this.deliveryTag = deliveryTag;
             this.body = body;
+            this.type = type;
         }
 
         long getDeliveryTag() {
@@ -163,6 +170,10 @@ public class AMQPSpout implements IRichSpout {
 
         byte[] getBody() {
             return body;
+        }
+
+        String getType() {
+            return type;
         }
     }
 }
