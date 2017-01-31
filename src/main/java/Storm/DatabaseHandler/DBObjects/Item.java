@@ -2,9 +2,11 @@ package Storm.DatabaseHandler.DBObjects;
 
 import com.google.common.collect.Lists;
 import org.apache.storm.jdbc.common.Column;
+import org.apache.storm.tuple.Fields;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by charlie on 30/01/17.
@@ -38,12 +40,16 @@ public class Item {
     public static String columnsToString() {
         String columnString = "";
         for (Column col : columns) {
-            if (columns.indexOf(col) != columns.size())
+            if (columns.indexOf(col) != columns.size() - 1)
                 columnString += col.getColumnName() + ",";
             else
                 columnString += col.getColumnName();
         }
         return columnString;
+    }
+    public static Fields fields() {
+        List<String> fields = columns.stream().map(Column::getColumnName).collect(Collectors.toList());
+        return new Fields(fields);
     }
 
     public static String getPlaceholders() {

@@ -33,19 +33,11 @@ public class ItemTransformBolt implements IRichBolt {
         System.out.println(tuple.getValues());
         System.out.println(String.format("Transforming %s", tuple.getMessageId().toString()));
 
-        // Can't do this atm. See @declareOutputFields
-//        switch (type) {
-//            case "item":
-//                Item item = (Item) tuple.getValueByField("item");
-//                emitValues.add(transformer.transformItem(item));
-//                break;
-//        }
-
         Item item = (Item) tuple.getValueByField("item");
         emitValues = transformer.transformItem(item);
 
-        System.out.println("[LOG] JSON transformed, emitting..");
-        _collector.emit(tuple, emitValues);
+        System.out.println("[LOG] Item Object transformed, emitting..");
+        _collector.emit("item", tuple, emitValues);
         _collector.ack(tuple);
     }
 
@@ -60,9 +52,8 @@ public class ItemTransformBolt implements IRichBolt {
     // This also gets set when the topology is created, so we can't modify it dynamically depending on the msg we receive in the tuple
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("inv_item_ref", "inv_item_class", "inv_item_subclass", "inv_item_status", "inv_item_class_display",
-                "inv_item_subclass_display", "inv_item_status_display", "barcode", "stated_day"
-                , "stated_time", "client", "customer_name", "customer_address_1", "version", "event_date", "schedule_mgmt_id", "postcode", "client_id", "route_type"));
+        outputFieldsDeclarer.declareStream("item", Storm.DatabaseHandler.DBObjects.Item.fields());
+        outputFieldsDeclarer.declareStream("ErrorStream", new Fields("error_msg"));
 
     }
 

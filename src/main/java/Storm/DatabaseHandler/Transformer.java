@@ -5,6 +5,7 @@ import Storm.AMQPHandler.JSONObj.Item.ItemState;
 import org.apache.storm.tuple.Values;
 
 import java.sql.SQLException;
+import java.util.Arrays;
 
 /**
  * Created by charlie on 30/01/17.
@@ -36,7 +37,6 @@ public class Transformer {
                         item.setScheduleId(LookupHandler.lookupId("schedule_management_dh", "parcelshop_tier5", item.getRouteRef()));
                     }
                     break;
-
             }
 
         } catch (ClassNotFoundException | SQLException e) {
@@ -71,18 +71,24 @@ public class Transformer {
     }
 
     Values transformItemCreatedState(ItemState itemState) {
-        System.out.println("[LOG] Transforming Item now..");
+        System.out.println("[LOG] Transforming Item State now..");
 
         try {
 
-
+            itemState.setItemId(LookupHandler.lookupId("inv_item_d", "inv_item_ref", itemState.getReference()));
             itemState.setItemClassId(LookupHandler.lookupId("inv_item_state_type_d", "class", itemState.getItemStateClass()));
             itemState.setItemStateClassId(LookupHandler.lookupId("inv_item_state_type_d", "subclass", itemState.getItemStateSubClass()));
             itemState.setStatusId(LookupHandler.lookupId("inv_item_status_type_d", "class", itemState.getStatus()));
-            itemState.setStateDateId(LookupHandler.lookupId("date_d", "date",
-                    itemState.getStateDateTimeLocal().substring(0, itemState.getStateDateTimeLocal().indexOf("T"))));
-            itemState.setStateTimeId(LookupHandler.lookupId("time_d", "time",
-                    itemState.getStateDateTimeLocal().substring(itemState.getStateDateTimeLocal().indexOf("T"), itemState.getStateDateTimeLocal().indexOf("Z"))));
+            if (itemState.getStateDateTimeLocal().contains("T")) {
+                itemState.setStateDateId(LookupHandler.lookupId("date_d", "date",
+                        itemState.getStateDateTimeLocal().substring(0, itemState.getStateDateTimeLocal().indexOf("T"))));
+                itemState.setStateTimeId(LookupHandler.lookupId("time_d", "time",
+                        itemState.getStateDateTimeLocal().substring(itemState.getStateDateTimeLocal().indexOf("T"), itemState.getStateDateTimeLocal().indexOf("Z"))));
+            } else {
+                String[] dateParts = itemState.getStateDateTimeLocal().split(" ");
+                itemState.setStateDateId(LookupHandler.lookupId("date_d", "date", dateParts[0]));
+                itemState.setStateTimeId(LookupHandler.lookupId("time_d", "time", dateParts[1]));
+            }
             itemState.setRouteTypeId(LookupHandler.lookupId("route_type_d", "route_type_display", itemState.getRouteType()));
 
 
@@ -112,8 +118,8 @@ public class Transformer {
         output.add(itemState.getGeographyId());
         output.add(itemState.getStateCounter());
 
-        output.add(itemState.getBeginDate()); // begin date ID!!
-        
+        output.add(itemState.getBeginDateId());
+
         output.add(itemState.getEtaStartDate());
         output.add(itemState.getEtaEndDate());
         output.add(itemState.getAdditionalInfo());

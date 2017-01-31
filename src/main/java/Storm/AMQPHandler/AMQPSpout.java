@@ -155,6 +155,12 @@ public class AMQPSpout implements IRichSpout {
 
     @Override
     public void fail(Object o) {
+        try {
+
+            channel.basicAck((Long) o, false);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         // add fault-tolerant retry logic in here (avoid infinite loop while still trying a message atleast once)
     }
 

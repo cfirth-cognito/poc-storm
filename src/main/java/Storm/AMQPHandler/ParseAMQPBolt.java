@@ -37,18 +37,18 @@ public class ParseAMQPBolt implements IRichBolt {
             case "item":
                 Item item = parser.parseItem(msgBody);
                 System.out.println("[LOG] Validation: " + parser.validateItem(item));
-                if (parser.validateItem(item) == null)
+                if (parser.validateItem(item) == null) {
                     emitValues.add(item);
-                else {
+                    _collector.emit("item", tuple, emitValues);
+                } else {
                     System.out.println("Item validation failed.");
                     _collector.emit("ErrorStream", new Values(parser.validateItem(item)));
+
 //                    _collector.fail(tuple); // Failed validation.
                 }
                 break;
         }
         System.out.println("[LOG] JSON transformed to Object.");
-
-        _collector.emit("item", tuple, emitValues);
         _collector.ack(tuple);
     }
 

@@ -39,11 +39,20 @@ public class ItemState {
     private int fromShopId;
     private String toShop;
     private int toShopId;
+    private int beginDateId;
     private String billingRef;
 
     private int clientId;
 
     public ItemState() {
+    }
+
+    public int getBeginDateId() {
+        return beginDateId;
+    }
+
+    public void setBeginDateId(int beginDateId) {
+        this.beginDateId = beginDateId;
     }
 
     public int getClientId() {

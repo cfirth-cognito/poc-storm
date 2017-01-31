@@ -25,15 +25,21 @@ public class LookupHandler {
         }
         prepareStatement = prepareStatement.replace("(tbl)", table);
         prepareStatement = prepareStatement.replace("(col)", column);
-        stmt = connection.prepareStatement(prepareStatement);
+        try {
+            stmt = connection.prepareStatement(prepareStatement);
 
-        System.out.println(String.format("CF Looking up from %s, column %s, value %s", table, column, value));
-        stmt.setString(1, value);
+            System.out.println(String.format("[LOG] Looking up from %s, column %s, value %s", table, column, value));
+            stmt.setString(1, value);
+            System.out.println("[LOG] Lookup Query: " + prepareStatement);
 
-        ResultSet resultSet = stmt.executeQuery();
+            ResultSet resultSet = stmt.executeQuery();
 
-        if (resultSet.next()) {
-            return resultSet.getInt(1);
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+        } catch (SQLException | NullPointerException e) {
+            System.out.println(String.format("[LOG] Caught Exception %s looking up id in table %s, column %s, value %s. Returning 1.",
+                    e.getMessage(), table, column, value));
         }
 
         return 1; // Unknown

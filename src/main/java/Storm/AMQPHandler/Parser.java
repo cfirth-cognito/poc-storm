@@ -63,9 +63,8 @@ public class Parser {
         try {
             return JsonPath.parse(msg).read(payload + path);
         } catch (PathNotFoundException e) {
-            System.out.println("[LOG] CAUGHT EXCEPTION");
-            System.out.println("[LOG] " + e.getMessage());
             if (e.getMessage().contains("'null")) { // Null value in JSON - valid, handle properly
+                System.out.println("[LOG] Handling 'null' json value.");
                 return null;
             } else {
                 e.printStackTrace();

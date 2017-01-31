@@ -5,6 +5,7 @@ import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
 import org.apache.storm.topology.OutputFieldsDeclarer;
+import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
@@ -31,7 +32,7 @@ public class ItemStateTransformBolt implements IRichBolt {
         Transformer transformer = new Transformer();
         Values emitValues;
         System.out.println(tuple.getValues());
-        System.out.println(String.format("Transforming %s", tuple.getMessageId().toString()));
+        System.out.println(String.format("ItemState Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
         ItemState state;
         if (tuple.getSourceStreamId().equalsIgnoreCase("item")) {
             state = createItemCreatedStateObject(tuple);
@@ -41,8 +42,9 @@ public class ItemStateTransformBolt implements IRichBolt {
 
         emitValues = transformer.transformItemCreatedState(state);
 
-        System.out.println("[LOG] JSON transformed, emitting..");
-        _collector.emit(tuple, emitValues);
+        System.out.println("[LOG] Item State Object transformed, emitting..");
+        System.out.println(emitValues);
+        _collector.emit("item-state", tuple, emitValues);
         _collector.ack(tuple);
     }
 
@@ -51,6 +53,8 @@ public class ItemStateTransformBolt implements IRichBolt {
         ItemState state = new ItemState();
         state.setScheduleId(item.getIntegerByField("schedule_mgmt_id"));
         state.setItemClass(item.getStringByField("inv_item_class"));
+        state.setReference(item.getStringByField("inv_item_ref"));
+        state.setStateDateTimeLocal(item.getStringByField("event_date"));
         state.setItemStateClass("CREATED");
         state.setItemStateSubClass("N/A");
         state.setResourceId(1);
@@ -58,8 +62,11 @@ public class ItemStateTransformBolt implements IRichBolt {
         state.setNetworkId(1);
         state.setGeographyId(1);
         state.setStateCounter(1);
+        state.setBeginDateId(1);
         state.setListRef("N/A");
         state.setMessageRef("N/A");
+        state.setAdditionalInfo("");
+        state.setRouteType(item.getStringByField("route_type"));
         return state;
     }
 
@@ -71,7 +78,8 @@ public class ItemStateTransformBolt implements IRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-
+        outputFieldsDeclarer.declareStream("item-state", Storm.DatabaseHandler.DBObjects.ItemState.fields());
+        outputFieldsDeclarer.declareStream("ErrorStream", new Fields("error_msg"));
     }
 
     @Override
