@@ -1,5 +1,7 @@
 package Storm.AMQPHandler.JSONObj.Item;
 
+import Storm.Util.Field;
+
 /**
  * Created by Charlie on 28/01/2017.
  */
@@ -13,12 +15,9 @@ public class ItemState {
     private Integer itemId;
     private Integer listId;
     private String listRef;
-    private String itemClass;
-    private String itemStateClass;
-    private String itemStateSubClass;
-    private int itemClassId;
-    private int itemStateClassId;
-    private int itemStateSubClassId;
+    private Field itemClass = new Field();
+    private Field itemStateClass = new Field();
+    private Field itemStateSubClass = new Field();
     private int resourceId;
     private int scheduleId;
     private String customerName;
@@ -31,8 +30,7 @@ public class ItemState {
     private String additionalInfo;
     private String status;
     private int statusId;
-    private int manifestedId;
-    private int trackingPointId;
+    private Field manifested = new Field();
     private String routeType;
     private int routeTypeId;
     private String fromShop;
@@ -42,9 +40,89 @@ public class ItemState {
     private int beginDateId;
     private String billingRef;
 
+    private String resourceRef;
+    private String routeRef;
+    private Field outcomeClass = new Field();
+    private Field outcomeSubClass = new Field();
+    private Field trackingPoint = new Field();
+    private Field shopReference = new Field();
+
     private int clientId;
 
     public ItemState() {
+    }
+
+
+    public Field getItemClass() {
+        return itemClass;
+    }
+
+    public void setItemClass(Field itemClass) {
+        this.itemClass = itemClass;
+    }
+
+    public Field getItemStateClass() {
+        return itemStateClass;
+    }
+
+    public void setItemStateClass(Field itemStateClass) {
+        this.itemStateClass = itemStateClass;
+    }
+
+    public Field getItemStateSubClass() {
+        return itemStateSubClass;
+    }
+
+    public void setItemStateSubClass(Field itemStateSubClass) {
+        this.itemStateSubClass = itemStateSubClass;
+    }
+
+    public Field getShopReference() {
+        return shopReference;
+    }
+
+    public void setShopReference(Field shopReference) {
+        this.shopReference = shopReference;
+    }
+
+    public Field getTrackingPoint() {
+        return trackingPoint;
+    }
+
+    public void setTrackingPoint(Field trackingPoint) {
+        this.trackingPoint = trackingPoint;
+    }
+
+    public Field getOutcomeClass() {
+        return outcomeClass;
+    }
+
+    public void setOutcomeClass(Field outcomeClass) {
+        this.outcomeClass = outcomeClass;
+    }
+
+    public Field getOutcomeSubClass() {
+        return outcomeSubClass;
+    }
+
+    public void setOutcomeSubClass(Field outcomeSubClass) {
+        this.outcomeSubClass = outcomeSubClass;
+    }
+
+    public String getRouteRef() {
+        return routeRef;
+    }
+
+    public void setRouteRef(String routeRef) {
+        this.routeRef = routeRef;
+    }
+
+    public String getResourceRef() {
+        return resourceRef;
+    }
+
+    public void setResourceRef(String resourceRef) {
+        this.resourceRef = resourceRef;
     }
 
     public int getBeginDateId() {
@@ -63,61 +141,12 @@ public class ItemState {
         this.clientId = clientId;
     }
 
-
-    public void setItemClassId(int itemClassId) {
-        this.itemClassId = itemClassId;
-    }
-
-    public void setItemStateClassId(int itemStateClassId) {
-        this.itemStateClassId = itemStateClassId;
-    }
-
-    public int getItemClassId() {
-        return itemClassId;
-    }
-
-    public int getItemStateClassId() {
-        return itemStateClassId;
-    }
-
-    public int getItemStateSubClassId() {
-        return itemStateSubClassId;
-    }
-
-    public void setItemStateSubClassId(int itemStateSubClassId) {
-        this.itemStateSubClassId = itemStateSubClassId;
-    }
-
     public String getReference() {
         return reference;
     }
 
     public void setReference(String reference) {
         this.reference = reference;
-    }
-
-    public String getItemClass() {
-        return itemClass;
-    }
-
-    public void setItemClass(String itemClass) {
-        this.itemClass = itemClass;
-    }
-
-    public String getItemStateClass() {
-        return itemStateClass;
-    }
-
-    public void setItemStateClass(String itemStateClass) {
-        this.itemStateClass = itemStateClass;
-    }
-
-    public String getItemStateSubClass() {
-        return itemStateSubClass;
-    }
-
-    public void setItemStateSubClass(String itemStateSubClass) {
-        this.itemStateSubClass = itemStateSubClass;
     }
 
     public String getCustomerName() {
@@ -283,22 +312,6 @@ public class ItemState {
         this.statusId = statusId;
     }
 
-    public int getManifestedId() {
-        return manifestedId;
-    }
-
-    public void setManifestedId(int manifestedId) {
-        this.manifestedId = manifestedId;
-    }
-
-    public int getTrackingPointId() {
-        return trackingPointId;
-    }
-
-    public void setTrackingPointId(int trackingPointId) {
-        this.trackingPointId = trackingPointId;
-    }
-
     public int getRouteTypeId() {
         return routeTypeId;
     }
@@ -345,5 +358,13 @@ public class ItemState {
 
     public void setBillingRef(String billingRef) {
         this.billingRef = billingRef;
+    }
+
+    public Field getManifested() {
+        return manifested;
+    }
+
+    public void setManifested(Field manifested) {
+        this.manifested = manifested;
     }
 }

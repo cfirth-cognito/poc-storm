@@ -70,14 +70,13 @@ public class Transformer {
         return output;
     }
 
-    Values transformItemCreatedState(ItemState itemState) {
+    Values transformItemState(ItemState itemState) {
         System.out.println("[LOG] Transforming Item State now..");
 
         try {
-
             itemState.setItemId(LookupHandler.lookupId("inv_item_d", "inv_item_ref", itemState.getReference()));
-            itemState.setItemClassId(LookupHandler.lookupId("inv_item_state_type_d", "class", itemState.getItemStateClass()));
-            itemState.setItemStateClassId(LookupHandler.lookupId("inv_item_state_type_d", "subclass", itemState.getItemStateSubClass()));
+            itemState.getItemClass().id = LookupHandler.lookupId("inv_item_state_type_d", "class", itemState.getItemStateClass().value);
+            itemState.getItemStateClass().id = LookupHandler.lookupId("inv_item_state_type_d", "subclass", itemState.getItemStateSubClass().value);
             itemState.setStatusId(LookupHandler.lookupId("inv_item_status_type_d", "class", itemState.getStatus()));
             if (itemState.getStateDateTimeLocal().contains("T")) {
                 itemState.setStateDateId(LookupHandler.lookupId("date_d", "date",
@@ -90,6 +89,8 @@ public class Transformer {
                 itemState.setStateTimeId(LookupHandler.lookupId("time_d", "time", dateParts[1]));
             }
             itemState.setRouteTypeId(LookupHandler.lookupId("route_type_d", "route_type_display", itemState.getRouteType()));
+
+            itemState.getManifested().id = itemState.getManifested().value.equalsIgnoreCase("N/A") ? 1 : 2;
 
 
         } catch (ClassNotFoundException | SQLException e) {
@@ -110,8 +111,8 @@ public class Transformer {
 
         output.add(itemState.getListId());
         output.add(itemState.getListRef());
-        output.add(itemState.getItemClassId());
-        output.add(itemState.getItemStateClassId());
+        output.add(itemState.getItemClass().id);
+        output.add(itemState.getItemStateClass().id);
         output.add(itemState.getResourceId());
         output.add(itemState.getScheduleId());
         output.add(itemState.getNetworkId());
@@ -124,8 +125,8 @@ public class Transformer {
         output.add(itemState.getEtaEndDate());
         output.add(itemState.getAdditionalInfo());
         output.add(itemState.getStatusId());
-        output.add(itemState.getManifestedId());
-        output.add(itemState.getTrackingPointId());
+        output.add(itemState.getManifested().id);
+        output.add(itemState.getTrackingPoint().id);
         output.add(itemState.getRouteTypeId());
         output.add(itemState.getFromShopId());
         output.add(itemState.getToShopId());

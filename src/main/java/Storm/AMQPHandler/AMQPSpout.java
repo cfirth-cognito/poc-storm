@@ -27,6 +27,7 @@ public class AMQPSpout implements IRichSpout {
     private String vhost;
     private String username;
     private String password;
+    private String streamId;
 
     private String queue;
 
@@ -40,13 +41,14 @@ public class AMQPSpout implements IRichSpout {
     private ArrayList<Delivery> deliveries = new ArrayList<>();
 
 
-    public AMQPSpout(String host, int port, String vhost, String username, String password, String queue) {
+    public AMQPSpout(String host, int port, String vhost, String username, String password, String queue, String streamId) {
         this.host = host;
         this.port = port;
         this.vhost = vhost;
         this.username = username;
         this.password = password;
         this.queue = queue;
+        this.streamId = streamId;
     }
 
     @Override
@@ -80,9 +82,8 @@ public class AMQPSpout implements IRichSpout {
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                 String type = envelope.getRoutingKey().substring(0, envelope.getRoutingKey().lastIndexOf("-"));
                 Delivery delivery = new Delivery(envelope.getDeliveryTag(), body, type);
-                System.out.println("[LOG] received msg " + envelope.getDeliveryTag());
+//                System.out.println("[LOG] received msg " + envelope.getDeliveryTag());
                 deliveries.add(delivery);
-//                channel.basicAck(envelope.getDeliveryTag(), false); // Acking here means no retry functionality.
             }
         };
 
@@ -122,19 +123,16 @@ public class AMQPSpout implements IRichSpout {
             final Delivery delivery = deliveries.remove(deliveries.size() - 1);
             if (delivery == null) return;
             String msgBody = "";
-            String type = "";
             long deliveryTag = delivery.getDeliveryTag();
 
             try {
                 msgBody = new String(delivery.getBody(), "UTF-8");
-                type = delivery.getType();
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
 
             emitValues.add(msgBody);
-
-            _collector.emit("item", emitValues, deliveryTag);
+            _collector.emit(streamId, emitValues, deliveryTag);
         }
     }
 
@@ -156,7 +154,6 @@ public class AMQPSpout implements IRichSpout {
     @Override
     public void fail(Object o) {
         try {
-
             channel.basicAck((Long) o, false);
         } catch (IOException e) {
             e.printStackTrace();
@@ -164,13 +161,10 @@ public class AMQPSpout implements IRichSpout {
         // add fault-tolerant retry logic in here (avoid infinite loop while still trying a message atleast once)
     }
 
-    // Declares fields to output from spout
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        // Decalare Message Type specific streams:
-//        outputFieldsDeclarer.declareStream("item-stream", new Fields("type", "body"));
-
         outputFieldsDeclarer.declareStream("item", new Fields("body"));
+        outputFieldsDeclarer.declareStream("item-state", new Fields("body"));
     }
 
     @Override

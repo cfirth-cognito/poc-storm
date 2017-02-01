@@ -1,6 +1,7 @@
 package Storm.AMQPHandler;
 
 import Storm.AMQPHandler.JSONObj.Item.Item;
+import Storm.AMQPHandler.JSONObj.Item.ItemState;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
@@ -30,6 +31,7 @@ public class ParseAMQPBolt implements IRichBolt {
         Parser parser = new Parser();
         Values emitValues = new Values();
         String msgBody = tuple.getStringByField("body");
+        msgBody = msgBody.replaceAll("\"extensionsXml.*  ", "").replace("\\\"sla", "\"sla");
 
         System.out.println(String.format("[LOG] Parsing AMQP message %s..", tuple.getMessageId().toString()));
 
@@ -43,9 +45,21 @@ public class ParseAMQPBolt implements IRichBolt {
                 } else {
                     System.out.println("Item validation failed.");
                     _collector.emit("ErrorStream", new Values(parser.validateItem(item)));
-
-//                    _collector.fail(tuple); // Failed validation.
                 }
+                break;
+            case "item-state":
+                ItemState itemState = parser.parseItemState(msgBody);
+                if (parser.validateItemState(itemState) == null) {
+                    emitValues.add(itemState);
+                    _collector.emit("item-state", tuple, emitValues);
+                } else {
+                    System.out.println("Item State validation failed.");
+                    _collector.emit("ErrorStream", new Values(parser.validateItemState(itemState)));
+                }
+                break;
+            case "list":
+                break;
+            case "list-state":
                 break;
         }
         System.out.println("[LOG] JSON transformed to Object.");
@@ -59,6 +73,7 @@ public class ParseAMQPBolt implements IRichBolt {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declareStream("item", new Fields("item"));
+        outputFieldsDeclarer.declareStream("item-state", new Fields("item-state"));
         outputFieldsDeclarer.declareStream("ErrorStream", new Fields("error_msg"));
     }
 

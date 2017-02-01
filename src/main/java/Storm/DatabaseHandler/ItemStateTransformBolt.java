@@ -9,7 +9,6 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,12 +34,12 @@ public class ItemStateTransformBolt implements IRichBolt {
         System.out.println(String.format("ItemState Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
         ItemState state;
         if (tuple.getSourceStreamId().equalsIgnoreCase("item")) {
-            state = createItemCreatedStateObject(tuple);
+            state = createItemStateCreatedObject(tuple);
         } else {
             state = (ItemState) tuple;
         }
 
-        emitValues = transformer.transformItemCreatedState(state);
+        emitValues = transformer.transformItemState(state);
 
         System.out.println("[LOG] Item State Object transformed, emitting..");
         System.out.println(emitValues);
@@ -49,14 +48,15 @@ public class ItemStateTransformBolt implements IRichBolt {
     }
 
 
-    private ItemState createItemCreatedStateObject(Tuple item) {
+    private ItemState createItemStateCreatedObject(Tuple item) {
         ItemState state = new ItemState();
         state.setScheduleId(item.getIntegerByField("schedule_mgmt_id"));
-        state.setItemClass(item.getStringByField("inv_item_class"));
+        state.getItemClass().value = item.getStringByField("inv_item_class");
         state.setReference(item.getStringByField("inv_item_ref"));
         state.setStateDateTimeLocal(item.getStringByField("event_date"));
-        state.setItemStateClass("CREATED");
-        state.setItemStateSubClass("N/A");
+        state.getItemStateClass().value = "CREATED";
+        state.getManifested().value = "N/A";
+        state.getItemStateSubClass().value = "N/A";
         state.setResourceId(1);
         state.setListId(1);
         state.setNetworkId(1);
