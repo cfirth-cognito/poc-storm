@@ -48,8 +48,11 @@ public class ItemStateTransformBolt implements IRichBolt {
     }
 
 
-    private ItemState createItemStateCreatedObject(Tuple item) {
+    private ItemState createItemStateCreatedObject(Tuple tuple) {
         ItemState state = new ItemState();
+        Tuple item = (Tuple) tuple.getValueByField("values");
+        
+        state.setItemId(item.getIntegerByField("id"));
         state.setScheduleId(item.getIntegerByField("schedule_mgmt_id"));
         state.getItemClass().value = item.getStringByField("inv_item_class");
         state.setReference(item.getStringByField("inv_item_ref"));

@@ -98,7 +98,7 @@ public class StormBase {
 
         builder.setSpout("ItemStateAMQPSpout", itemStateAMQPSpout);
         builder.setBolt("item_state_transform_bolt", itemStateTransformBolt)
-                .shuffleGrouping("item_transform_bolt", "item") // Item Created State
+                .shuffleGrouping("persist_bolt", "item") // Item Created State
                 .shuffleGrouping("parse_amqp_bolt", "item-state");
         builder.setBolt("item_state_persistence_bolt", itemStatePersistenceBolt)
                 .shuffleGrouping("item_state_transform_bolt", "item-state");

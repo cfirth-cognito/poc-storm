@@ -71,13 +71,14 @@ public class InsertBoltImpl extends AbstractJdbcBolt {
             }
 
             /* Returns the ID of the last insert executed by the current connection */
-//            String insertId = (String) this.jdbcClient.select("SELECT LAST_INSERT_ID();", new ArrayList<>()).get(0).get(0).getVal();
+            String insertId = (String) this.jdbcClient.select("SELECT LAST_INSERT_ID();", new ArrayList<>()).get(0).get(0).getVal();
+            if (tuple.getSourceStreamId().equalsIgnoreCase("item"))
+                this.collector.emit(tuple.getSourceStreamId(), new Values(insertId, tuple));
 
-//            this.collector.emit(tuple.getSourceStreamId(), new Values(insertId));
             this.collector.ack(tuple);
         } catch (Exception exception) {
             System.out.println("[LOG] Emitting to ErrorStream");
-            if(exception.getCause() != null) {
+            if (exception.getCause() != null) {
                 this.collector.emit("ErrorStream", new Values(String.format("Exception while attempting to insert record: %s", exception.getCause().getMessage())));
             } else {
                 this.collector.emit("ErrorStream", new Values(String.format("Exception while attempting to insert record: %s", exception.getMessage())));
@@ -89,5 +90,6 @@ public class InsertBoltImpl extends AbstractJdbcBolt {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declareStream("ErrorStream", new Fields("error_msg"));
+        outputFieldsDeclarer.declareStream("item", new Fields("id", "values"));
     }
 }
