@@ -5,17 +5,18 @@ import Storm.AMQPHandler.JSONObj.Item.ItemState;
 import Storm.Util.Field;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by charlie on 30/01/17.
  */
 public class Parser {
+    private static final Logger log = LoggerFactory.getLogger(Parser.class);
 
     Item parseItem(String msg) {
-
         Item item = new Item();
         String payload = JsonPath.parse(msg).read("$.payload");
-
 
         item.setReference(parseByPath(payload, "$.itemMetadata.reference"));
         item.setItemClass(parseByPath(payload, "$.itemMetadata.class"));
@@ -109,10 +110,10 @@ public class Parser {
             return JsonPath.parse(msg).read(path);
         } catch (PathNotFoundException e) {
             if (e.getMessage().contains("'null")) { // Null value in JSON - valid, handle properly
-//                System.out.println("[LOG] Handling 'null' json value.");
+                log.debug("Gracefully handling a null json value in message");
                 return null;
             } else {
-//                System.out.println(String.format("[LOG] Path not found %s", path));
+                log.warn(String.format("Path %s not found in message!", path));
             }
         }
         return null;

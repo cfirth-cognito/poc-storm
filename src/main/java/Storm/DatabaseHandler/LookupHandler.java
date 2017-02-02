@@ -1,6 +1,10 @@
 package Storm.DatabaseHandler;
 
 
+import Storm.Util.PropertiesHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,11 +15,13 @@ import java.util.Map;
  * Created by Charlie on 28/01/2017.
  */
 class LookupHandler {
+    private static final Logger log = LoggerFactory.getLogger(LookupHandler.class);
 
     // hard coded config for now
-    private static String url = "jdbc:mysql://localhost:3306/hermes_mi";
-    private static String user = "root";
-    private static String pass = "root";
+    private static String url = String.format("jdbc:mysql://%s:%s/%s",
+            PropertiesHolder.databaseHost, PropertiesHolder.databasePort, PropertiesHolder.databaseSchema);
+    private static String user = PropertiesHolder.databaseUser;
+    private static String pass = PropertiesHolder.databasePass;
 
     private static Connection connection;
     private static PreparedStatement stmt;
@@ -31,7 +37,7 @@ class LookupHandler {
         try {
             stmt = connection.prepareStatement(idLookupStatement);
 
-//            System.out.println(String.format("[LOG] Looking up from %s, column %s, value %s", table, column, value));
+            log.debug(String.format("Looking up from %s, column %s, value %s", table, column, value));
             stmt.setString(1, value);
 
             ResultSet resultSet = stmt.executeQuery();
@@ -40,7 +46,7 @@ class LookupHandler {
                 return resultSet.getInt(1);
             }
         } catch (SQLException | NullPointerException e) {
-            System.out.println(String.format("[LOG] Caught Exception %s looking up id in table %s, column %s, value %s. Returning 1.",
+            log.debug(String.format("Caught Exception %s looking up id in table %s, column %s, value %s. Returning 1.",
                     e.getMessage(), table, column, value));
         }
         return 1; // Unknown
@@ -69,7 +75,7 @@ class LookupHandler {
                 return resultSet.getInt(1);
             }
         } catch (SQLException | NullPointerException e) {
-            System.out.println(String.format("[LOG] Caught Exception %s looking up id in table %s, columns %s, values %s. Returning 1.",
+            log.debug(String.format("Caught Exception %s looking up id in table %s, columns %s, values %s. Returning 1.",
                     e.getMessage(), table, columns, values));
         }
         return 1; // Unknown
@@ -79,7 +85,6 @@ class LookupHandler {
         String dimensionLookupStatement = "SELECT (cols) FROM (tbl) WHERE id = ?";
         Class.forName("com.mysql.jdbc.Driver");
         List<Object> data = new ArrayList<>();
-//        System.out.println(String.format("[LOG] Looking up from %s, columns %s, id %s", table, Arrays.toString(columnsToReturn.keySet().toArray()), id));
 
         if (connection == null) {
             connection = DriverManager.getConnection(url, user, pass);
@@ -90,7 +95,6 @@ class LookupHandler {
         try {
             stmt = connection.prepareStatement(dimensionLookupStatement);
             stmt.setString(1, id);
-//            System.out.println("[LOG] Lookup Query: " + dimensionLookupStatement);
 
             ResultSet resultSet = stmt.executeQuery();
 
@@ -109,7 +113,7 @@ class LookupHandler {
             }
             return data;
         } catch (SQLException | NullPointerException e) {
-            System.out.println(String.format("[LOG] Caught Exception %s looking up id in table %s, column %s, value %s. Returning 1.",
+            log.debug(String.format("Caught Exception %s looking up id in table %s, column %s, value %s. Returning 1.",
                     e.getMessage(), table, Arrays.toString(columnsToReturn.keySet().toArray()), id));
         }
         return null; // Unknown

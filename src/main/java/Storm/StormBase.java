@@ -8,48 +8,58 @@ import Storm.DatabaseHandler.InsertBolts.InsertBoltImpl;
 import Storm.DatabaseHandler.ItemStateTransformBolt;
 import Storm.DatabaseHandler.ItemTransformBolt;
 import Storm.ErrorHandler.ErrorBolt;
+import Storm.Util.PropertiesHolder;
 import org.apache.storm.LocalCluster;
+import org.apache.storm.StormSubmitter;
+import org.apache.storm.generated.AlreadyAliveException;
+import org.apache.storm.generated.AuthorizationException;
+import org.apache.storm.generated.InvalidTopologyException;
 import org.apache.storm.jdbc.bolt.JdbcInsertBolt;
 import org.apache.storm.jdbc.common.ConnectionProvider;
 import org.apache.storm.jdbc.common.HikariCPConnectionProvider;
 import org.apache.storm.jdbc.mapper.JdbcMapper;
 import org.apache.storm.jdbc.mapper.SimpleJdbcMapper;
 import org.apache.storm.topology.TopologyBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Created by Charlie on 28/01/2017.
  */
 
 public class StormBase {
+    private static final Logger log = LoggerFactory.getLogger(StormBase.class);
     private static ConnectionProvider connectionProvider;
 
     /* Item Topology */
-    private static AMQPSpout itemAMQPSpout = new AMQPSpout("localhost",
-            5672, "/", "guest", "guest", "mi-item-created", "item");
-    private static ItemTransformBolt itemTransformBolt = new ItemTransformBolt();
-    private static JdbcMapper itemJdbcMapper = new SimpleJdbcMapper(Item.getColumns());
+    private static AMQPSpout itemAMQPSpout;
+    private static ItemTransformBolt itemTransformBolt;
+    private static JdbcMapper itemJdbcMapper;
     private static InsertBoltImpl itemPersistenceBolt;
 
     /* Item State Topology */
-    private static AMQPSpout itemStateAMQPSpout = new AMQPSpout("localhost",
-            5672, "/", "guest", "guest", "mi-item-state-created", "item-state");
-    private static ItemStateTransformBolt itemStateTransformBolt = new ItemStateTransformBolt();
-    private static JdbcMapper itemStateJdbcMapper = new SimpleJdbcMapper(ItemState.getColumns());
+    private static AMQPSpout itemStateAMQPSpout;
+    private static ItemStateTransformBolt itemStateTransformBolt;
+    private static JdbcMapper itemStateJdbcMapper;
     private static InsertBoltImpl itemStatePersistenceBolt;
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException {
         TopologyBuilder builder = new TopologyBuilder();
         Map<String, Object> configMap = new HashMap<>();
         configMap.put("dataSourceClassName", "com.mysql.jdbc.jdbc2.optional.MysqlDataSource");
-        configMap.put("dataSource.url", "jdbc:mysql://localhost:3306/hermes_mi");
-        configMap.put("dataSource.user", "root");
-        configMap.put("dataSource.password", "root");
+        configMap.put("dataSource.url", String.format("jdbc:mysql://%s:%s/%s",
+                PropertiesHolder.databaseHost, PropertiesHolder.databasePort, PropertiesHolder.databaseSchema));
+        configMap.put("dataSource.user", PropertiesHolder.databaseUser);
+        configMap.put("dataSource.password", PropertiesHolder.databasePass);
         connectionProvider = new HikariCPConnectionProvider(configMap);
+        defineTasks();
 
-        System.out.println("Starting Storm..");
+        log.info("Starting Storm..");
 
         /* Generic Processing Bolts */
 
@@ -64,15 +74,26 @@ public class StormBase {
         builder = buildItemStateTopology(builder);
         builder = buildErrorTopology(builder);
 
-        System.out.println("[LOG] Topology configured. Creating now..");
+        log.info("Topology configured. Creating now..");
         builder.createTopology();
+        String production = PropertiesHolder.production;
 
-        LocalCluster cluster = new LocalCluster();
-        cluster.submitTopology("AMQPStormPOC", configMap, builder.createTopology());
+        if (production.equalsIgnoreCase("false")) {
+            LocalCluster cluster = new LocalCluster();
+            cluster.submitTopology("AMQPStormPOC", configMap, builder.createTopology());
 
-        System.out.println("[LOG] Sleeping");
-        Thread.sleep(1000000);
-        cluster.shutdown();
+            System.out.println("[LOG] Sleeping");
+            Thread.sleep(1000000);
+            cluster.shutdown();
+        } else {
+            try {
+                StormSubmitter.submitTopology("Storm-POC", configMap, builder.createTopology());
+            } catch (AlreadyAliveException | InvalidTopologyException | AuthorizationException e) {
+                log.error("Storm cluster already running!!");
+                e.printStackTrace();
+            }
+        }
+
     }
 
     private static TopologyBuilder buildItemTopology(TopologyBuilder builder) {
@@ -116,6 +137,18 @@ public class StormBase {
                 .shuffleGrouping("item_state_persistence_bolt", "ErrorStream");
 
         return builder;
+    }
+
+    private static void defineTasks() {
+        itemAMQPSpout = new AMQPSpout(PropertiesHolder.rabbitHost, PropertiesHolder.rabbitPort, PropertiesHolder.rabbitVHost,
+                PropertiesHolder.rabbitUser, PropertiesHolder.rabbitPass, PropertiesHolder.itemQueue, "item");
+        itemTransformBolt = new ItemTransformBolt();
+        itemJdbcMapper = new SimpleJdbcMapper(Item.getColumns());
+
+        itemStateAMQPSpout = new AMQPSpout(PropertiesHolder.rabbitHost, PropertiesHolder.rabbitPort, PropertiesHolder.rabbitVHost,
+                PropertiesHolder.rabbitUser, PropertiesHolder.rabbitPass, PropertiesHolder.itemStateQueue, "item-state");
+        itemStateTransformBolt = new ItemStateTransformBolt();
+        itemStateJdbcMapper = new SimpleJdbcMapper(ItemState.getColumns());
     }
 }
 

@@ -9,6 +9,8 @@ import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -16,6 +18,8 @@ import java.util.Map;
  * Created by Charlie on 28/01/2017.
  */
 public class ParseAMQPBolt implements IRichBolt {
+    private static final Logger log = LoggerFactory.getLogger(ParseAMQPBolt.class);
+
 
     private TopologyContext context;
     private OutputCollector _collector;
@@ -33,17 +37,15 @@ public class ParseAMQPBolt implements IRichBolt {
         String msgBody = tuple.getStringByField("body");
         msgBody = msgBody.replaceAll("\"extensionsXml.*  ", "").replace("\\\"sla", "\"sla");
 
-//        System.out.println(String.format("[LOG] Parsing AMQP message %s..", tuple.getMessageId().toString()));
+        log.debug(String.format("Parsing AMQP message %s..", tuple.getMessageId().toString()));
 
         switch (tuple.getSourceStreamId()) {
             case "item":
                 Item item = parser.parseItem(msgBody);
-//                System.out.println("[LOG] Validation: " + parser.validateItem(item));
                 if (parser.validateItem(item) == null) {
                     emitValues.add(item);
                     _collector.emit("item", tuple, emitValues);
                 } else {
-                    System.out.println("Item validation failed.");
                     _collector.emit("ErrorStream", new Values(parser.validateItem(item)));
                 }
                 break;
@@ -53,7 +55,6 @@ public class ParseAMQPBolt implements IRichBolt {
                     emitValues.add(itemState);
                     _collector.emit("item-state", tuple, emitValues);
                 } else {
-                    System.out.println("Item State validation failed.");
                     _collector.emit("ErrorStream", new Values(parser.validateItemState(itemState)));
                 }
                 break;
@@ -62,7 +63,6 @@ public class ParseAMQPBolt implements IRichBolt {
             case "list-state":
                 break;
         }
-//        System.out.println("[LOG] JSON transformed to Object.");
         _collector.ack(tuple);
     }
 

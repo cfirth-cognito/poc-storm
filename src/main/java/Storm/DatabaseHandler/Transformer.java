@@ -3,6 +3,8 @@ package Storm.DatabaseHandler;
 import Storm.AMQPHandler.JSONObj.Item.Item;
 import Storm.AMQPHandler.JSONObj.Item.ItemState;
 import org.apache.storm.tuple.Values;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -12,10 +14,10 @@ import java.util.Arrays;
  * Created by charlie on 30/01/17.
  */
 public class Transformer {
+    private static final Logger log = LoggerFactory.getLogger(Transformer.class);
+
 
     Values transformItem(Item item) {
-//        System.out.println("[LOG] Transforming Item now..");
-
         try {
 
             item.setItemClassDisplay(String.valueOf(LookupHandler.lookupId("inv_item_class_type_d", "class_display", item.getItemClass())));
@@ -68,8 +70,6 @@ public class Transformer {
     }
 
     Values transformItemState(ItemState itemState) {
-        System.out.println("[LOG] Transforming Item State now..");
-
         try {
             if (itemState.getItemId() == null)
                 itemState.setItemId(LookupHandler.lookupId("inv_item_d", "inv_item_ref", itemState.getReference()));
@@ -78,8 +78,6 @@ public class Transformer {
             itemState.getItemStateClass().id = LookupHandler.lookupId("inv_item_state_type_d", Arrays.asList("class", "subclass"),
                     Arrays.asList(itemState.getItemStateClass().value, itemState.getItemStateSubClass().value));
             itemState.setStatusId(LookupHandler.lookupId("inv_item_status_type_d", "class", itemState.getStatus()));
-
-//            2017-02-02 11:07:47.120
 
             ArrayList<Integer> dateTimeIds = LookupHandler.lookUpDateTime(itemState.getStateDateTimeLocal());
             itemState.setStateDateId(dateTimeIds.get(0));

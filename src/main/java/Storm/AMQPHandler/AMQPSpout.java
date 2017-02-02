@@ -7,6 +7,8 @@ import org.apache.storm.topology.IRichSpout;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -18,6 +20,8 @@ import java.util.concurrent.TimeoutException;
  * Created by Charlie on 28/01/2017.
  */
 public class AMQPSpout implements IRichSpout {
+    private static final Logger log = LoggerFactory.getLogger(AMQPSpout.class);
+
     private SpoutOutputCollector _collector;
     private TopologyContext context;
 
@@ -82,7 +86,6 @@ public class AMQPSpout implements IRichSpout {
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                 String type = envelope.getRoutingKey().substring(0, envelope.getRoutingKey().lastIndexOf("-"));
                 Delivery delivery = new Delivery(envelope.getDeliveryTag(), body, type);
-//                System.out.println("[LOG] received msg " + envelope.getDeliveryTag());
                 deliveries.add(delivery);
             }
         };
@@ -141,7 +144,7 @@ public class AMQPSpout implements IRichSpout {
         final long deliveryTag = (long) o;
         if (channel != null) {
             try {
-                System.out.println(String.format("[LOG] Acking message %d", deliveryTag));
+                log.debug(String.format("Acking message %d", deliveryTag));
                 channel.basicAck(deliveryTag, false);
             } catch (IOException e) {
                 System.out.println(String.format("[LOG] Failed to ack delivery tag %d", deliveryTag));

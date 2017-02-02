@@ -5,6 +5,8 @@ import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -12,6 +14,7 @@ import java.util.Map;
  * Created by charlie on 30/01/17.
  */
 public class ErrorBolt implements IRichBolt {
+    private static final Logger log = LoggerFactory.getLogger(ErrorBolt.class);
     TopologyContext context;
     OutputCollector _collector;
 
@@ -23,7 +26,7 @@ public class ErrorBolt implements IRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        System.out.println(String.format("Caught error with tuple. [Error Msg]: %s. Logged error in DB and ack'd offending tuple.",
+        log.error(String.format("Caught error with tuple. [Error Msg]: %s. Logged error in DB and ack'd offending tuple.",
                 tuple.getStringByField("error_msg")));
         _collector.ack(tuple);
     }

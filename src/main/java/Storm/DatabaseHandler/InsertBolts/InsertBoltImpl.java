@@ -13,6 +13,8 @@ import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,11 +27,8 @@ import static java.lang.Math.toIntExact;
  * Created by charlie on 31/01/17.
  */
 
-/**
- * Created for use in our own JDBC implementation of the InsertBolt.
- * No use for this yet..but will become useful.
- */
 public class InsertBoltImpl extends AbstractJdbcBolt {
+    private static final Logger log = LoggerFactory.getLogger(InsertBoltImpl.class);
     private String tableName;
     private String insertQuery;
     private JdbcMapper jdbcMapper;
@@ -66,7 +65,9 @@ public class InsertBoltImpl extends AbstractJdbcBolt {
             List<Column> columns = this.jdbcMapper.getColumns(tuple);
             List<List<Column>> columnLists = new ArrayList();
             columnLists.add(columns);
-//            System.out.println(String.format("[LOG] Insert: %s\n%s", tuple.getValues(), columns));
+
+            log.debug(String.format("Insert: %s", columns));
+
             if (!StringUtils.isBlank(this.tableName)) {
                 this.jdbcClient.insert(this.tableName, columnLists);
             } else {
@@ -80,13 +81,11 @@ public class InsertBoltImpl extends AbstractJdbcBolt {
 
             this.collector.ack(tuple);
         } catch (Exception exception) {
-//            System.out.println("[LOG] Emitting to ErrorStream");
             if (exception.getCause() != null) {
                 this.collector.emit("ErrorStream", new Values(String.format("Exception while attempting to insert record: %s", exception.getCause().getMessage())));
             } else {
                 this.collector.emit("ErrorStream", new Values(String.format("Exception while attempting to insert record: %s", exception.getMessage())));
             }
-            exception.printStackTrace();
         }
     }
 

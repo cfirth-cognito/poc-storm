@@ -8,6 +8,8 @@ import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -15,6 +17,7 @@ import java.util.Map;
  * Created by charlie on 30/01/17.
  */
 public class ItemStateTransformBolt implements IRichBolt {
+    private static final Logger log = LoggerFactory.getLogger(ItemStateTransformBolt.class);
 
     TopologyContext context;
     OutputCollector _collector;
@@ -30,8 +33,7 @@ public class ItemStateTransformBolt implements IRichBolt {
     public void execute(Tuple tuple) {
         Transformer transformer = new Transformer();
         Values emitValues;
-        System.out.println(tuple.getValues());
-//        System.out.println(String.format("[LOG] ItemState Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
+        log.info(String.format("[LOG] ItemState Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
         ItemState state;
         if (tuple.getSourceStreamId().equalsIgnoreCase("item")) {
             state = createItemStateCreatedObject(tuple);
@@ -40,9 +42,6 @@ public class ItemStateTransformBolt implements IRichBolt {
         }
 
         emitValues = transformer.transformItemState(state);
-
-//        System.out.println("[LOG] Item State Object transformed, emitting..");
-//        System.out.println(emitValues);
         _collector.emit("item-state", tuple, emitValues);
         _collector.ack(tuple);
     }
@@ -75,7 +74,6 @@ public class ItemStateTransformBolt implements IRichBolt {
 
     @Override
     public void cleanup() {
-
     }
 
     @Override
