@@ -33,12 +33,12 @@ public class ParseAMQPBolt implements IRichBolt {
         String msgBody = tuple.getStringByField("body");
         msgBody = msgBody.replaceAll("\"extensionsXml.*  ", "").replace("\\\"sla", "\"sla");
 
-        System.out.println(String.format("[LOG] Parsing AMQP message %s..", tuple.getMessageId().toString()));
+//        System.out.println(String.format("[LOG] Parsing AMQP message %s..", tuple.getMessageId().toString()));
 
         switch (tuple.getSourceStreamId()) {
             case "item":
                 Item item = parser.parseItem(msgBody);
-                System.out.println("[LOG] Validation: " + parser.validateItem(item));
+//                System.out.println("[LOG] Validation: " + parser.validateItem(item));
                 if (parser.validateItem(item) == null) {
                     emitValues.add(item);
                     _collector.emit("item", tuple, emitValues);
@@ -62,7 +62,7 @@ public class ParseAMQPBolt implements IRichBolt {
             case "list-state":
                 break;
         }
-        System.out.println("[LOG] JSON transformed to Object.");
+//        System.out.println("[LOG] JSON transformed to Object.");
         _collector.ack(tuple);
     }
 

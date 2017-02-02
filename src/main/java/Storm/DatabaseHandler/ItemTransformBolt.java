@@ -30,13 +30,13 @@ public class ItemTransformBolt implements IRichBolt {
     public void execute(Tuple tuple) {
         Transformer transformer = new Transformer();
         Values emitValues;
-        System.out.println(tuple.getValues());
-        System.out.println(String.format("Transforming %s", tuple.getMessageId().toString()));
+//        System.out.println(tuple.getValues());
+//        System.out.println(String.format("Transforming %s", tuple.getMessageId().toString()));
 
         Item item = (Item) tuple.getValueByField("item");
         emitValues = transformer.transformItem(item);
 
-        System.out.println("[LOG] Item Object transformed, emitting..");
+//        System.out.println("[LOG] Item Object transformed, emitting..");
         _collector.emit("item", tuple, emitValues);
         _collector.ack(tuple);
     }

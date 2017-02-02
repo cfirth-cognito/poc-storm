@@ -19,6 +19,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static java.lang.Math.toIntExact;
+
 /**
  * Created by charlie on 31/01/17.
  */
@@ -64,6 +66,7 @@ public class InsertBoltImpl extends AbstractJdbcBolt {
             List<Column> columns = this.jdbcMapper.getColumns(tuple);
             List<List<Column>> columnLists = new ArrayList();
             columnLists.add(columns);
+//            System.out.println(String.format("[LOG] Insert: %s\n%s", tuple.getValues(), columns));
             if (!StringUtils.isBlank(this.tableName)) {
                 this.jdbcClient.insert(this.tableName, columnLists);
             } else {
@@ -71,20 +74,20 @@ public class InsertBoltImpl extends AbstractJdbcBolt {
             }
 
             /* Returns the ID of the last insert executed by the current connection */
-            String insertId = (String) this.jdbcClient.select("SELECT LAST_INSERT_ID();", new ArrayList<>()).get(0).get(0).getVal();
+            Integer insertId = toIntExact((Long) this.jdbcClient.select("SELECT LAST_INSERT_ID();", new ArrayList<>()).get(0).get(0).getVal());
             if (tuple.getSourceStreamId().equalsIgnoreCase("item"))
-                this.collector.emit(tuple.getSourceStreamId(), new Values(insertId, tuple));
+                this.collector.emit(tuple.getSourceStreamId(), tuple, new Values(insertId, tuple));
 
             this.collector.ack(tuple);
         } catch (Exception exception) {
-            System.out.println("[LOG] Emitting to ErrorStream");
+//            System.out.println("[LOG] Emitting to ErrorStream");
             if (exception.getCause() != null) {
                 this.collector.emit("ErrorStream", new Values(String.format("Exception while attempting to insert record: %s", exception.getCause().getMessage())));
             } else {
                 this.collector.emit("ErrorStream", new Values(String.format("Exception while attempting to insert record: %s", exception.getMessage())));
             }
+            exception.printStackTrace();
         }
-
     }
 
     @Override

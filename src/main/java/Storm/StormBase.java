@@ -86,8 +86,6 @@ public class StormBase {
         builder.setBolt("persist_bolt", itemPersistenceBolt)
                 .shuffleGrouping("item_transform_bolt", "item");
 
-//        builder.setBolt("item_state_transform_bolt", itemStateTransformBolt)
-
         return builder;
     }
 
@@ -111,6 +109,7 @@ public class StormBase {
     private static TopologyBuilder buildErrorTopology(TopologyBuilder builder) {
         ErrorBolt errorBolt = new ErrorBolt();
         builder.setBolt("error_bolt", errorBolt)
+                .shuffleGrouping("persist_bolt", "ErrorStream")
                 .shuffleGrouping("parse_amqp_bolt", "ErrorStream")
                 .shuffleGrouping("item_transform_bolt", "ErrorStream")
                 .shuffleGrouping("item_state_transform_bolt", "ErrorStream")
@@ -118,12 +117,6 @@ public class StormBase {
 
         return builder;
     }
-
-    /**
-     * output tuple to internal spout
-     * tuple includes inserted ID + other data
-     *
-     */
 }
 
 

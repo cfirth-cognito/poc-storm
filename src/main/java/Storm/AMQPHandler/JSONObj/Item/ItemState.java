@@ -16,6 +16,7 @@ public class ItemState {
     private Integer listId;
     private String listRef;
     private Field itemClass = new Field();
+    private Field itemSubClass = new Field();
     private Field itemStateClass = new Field();
     private Field itemStateSubClass = new Field();
     private int resourceId;
@@ -59,6 +60,14 @@ public class ItemState {
 
     public void setItemClass(Field itemClass) {
         this.itemClass = itemClass;
+    }
+
+    public Field getItemSubClass() {
+        return itemSubClass;
+    }
+
+    public void setItemSubClass(Field itemSubClass) {
+        this.itemSubClass = itemSubClass;
     }
 
     public Field getItemStateClass() {

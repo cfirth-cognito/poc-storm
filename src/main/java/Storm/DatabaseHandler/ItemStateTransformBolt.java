@@ -31,7 +31,7 @@ public class ItemStateTransformBolt implements IRichBolt {
         Transformer transformer = new Transformer();
         Values emitValues;
         System.out.println(tuple.getValues());
-        System.out.println(String.format("ItemState Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
+//        System.out.println(String.format("[LOG] ItemState Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
         ItemState state;
         if (tuple.getSourceStreamId().equalsIgnoreCase("item")) {
             state = createItemStateCreatedObject(tuple);
@@ -41,20 +41,20 @@ public class ItemStateTransformBolt implements IRichBolt {
 
         emitValues = transformer.transformItemState(state);
 
-        System.out.println("[LOG] Item State Object transformed, emitting..");
-        System.out.println(emitValues);
+//        System.out.println("[LOG] Item State Object transformed, emitting..");
+//        System.out.println(emitValues);
         _collector.emit("item-state", tuple, emitValues);
         _collector.ack(tuple);
     }
 
-
     private ItemState createItemStateCreatedObject(Tuple tuple) {
         ItemState state = new ItemState();
         Tuple item = (Tuple) tuple.getValueByField("values");
-        
-        state.setItemId(item.getIntegerByField("id"));
+
+        state.setItemId(tuple.getIntegerByField("id"));
         state.setScheduleId(item.getIntegerByField("schedule_mgmt_id"));
         state.getItemClass().value = item.getStringByField("inv_item_class");
+        state.getItemSubClass().value = item.getStringByField("inv_item_subclass");
         state.setReference(item.getStringByField("inv_item_ref"));
         state.setStateDateTimeLocal(item.getStringByField("event_date"));
         state.getItemStateClass().value = "CREATED";
@@ -72,7 +72,6 @@ public class ItemStateTransformBolt implements IRichBolt {
         state.setRouteType(item.getStringByField("route_type"));
         return state;
     }
-
 
     @Override
     public void cleanup() {
