@@ -1,5 +1,6 @@
 package Storm.DatabaseHandler.InsertBolts;
 
+import com.google.common.primitives.Ints;
 import org.apache.commons.lang.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.storm.jdbc.bolt.AbstractJdbcBolt;
@@ -75,7 +76,7 @@ public class InsertBoltImpl extends AbstractJdbcBolt {
             }
 
             /* Returns the ID of the last insert executed by the current connection */
-            Integer insertId = toIntExact((Long) this.jdbcClient.select("SELECT LAST_INSERT_ID();", new ArrayList<>()).get(0).get(0).getVal());
+            Integer insertId = Ints.checkedCast((Long) this.jdbcClient.select("SELECT LAST_INSERT_ID();", new ArrayList<Column>()).get(0).get(0).getVal());
             if (tuple.getSourceStreamId().equalsIgnoreCase("item"))
                 this.collector.emit(tuple.getSourceStreamId(), tuple, new Values(insertId, tuple));
 

@@ -78,6 +78,7 @@ public class StormBase {
         builder.createTopology();
         String production = PropertiesHolder.production;
 
+        System.out.println(production);
         if (production.equalsIgnoreCase("false")) {
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology("AMQPStormPOC", configMap, builder.createTopology());

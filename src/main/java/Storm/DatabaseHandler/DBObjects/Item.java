@@ -5,6 +5,8 @@ import org.apache.storm.jdbc.common.Column;
 import org.apache.storm.tuple.Fields;
 
 import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,8 +49,13 @@ public class Item {
         }
         return columnString;
     }
+
     public static Fields fields() {
-        List<String> fields = columns.stream().map(Column::getColumnName).collect(Collectors.toList());
+//        List<String> fields = columns.stream().map(Column::getColumnName).collect(Collectors.toList());
+        List<String> fields = new ArrayList<>();
+        for (Column column : columns) {
+            fields.add(column.getColumnName());
+        }
         return new Fields(fields);
     }
 

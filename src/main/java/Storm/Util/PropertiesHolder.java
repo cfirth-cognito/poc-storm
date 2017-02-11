@@ -11,7 +11,7 @@ public class PropertiesHolder {
     private static final Properties properties = new Properties();
 
     public static String databaseHost;
-    public static String databasePort;
+    public static int databasePort;
     public static String databaseSchema;
     public static String databaseUser;
     public static String databasePass;
@@ -41,7 +41,7 @@ public class PropertiesHolder {
             itemStateQueue = getValue("rabbit.queue.item_state");
 
             databaseHost = getValue("database.host");
-            databasePort = getValue("database.port");
+            databasePort = Integer.parseInt(getValue("database.port"));
             databaseSchema = getValue("database.schema");
             databaseUser = getValue("database.user");
             databasePass = getValue("database.pass");
