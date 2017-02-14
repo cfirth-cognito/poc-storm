@@ -64,3 +64,9 @@ poc-storm\.iml
 target/classes/
 
 *.iml
+
+target/maven-archiver/
+
+target/maven-status/maven-compiler-plugin/compile/default-compile/
+
+target/
