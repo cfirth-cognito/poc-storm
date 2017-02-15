@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 /**
  * Created by charlie on 30/01/17.
  */
+
 public class ItemState {
     private static List<Column> columns = Lists.newArrayList(
             new Column("inv_item_ref", Types.VARCHAR),

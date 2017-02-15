@@ -17,7 +17,6 @@ import java.util.Map;
 class LookupHandler {
     private static final Logger log = LoggerFactory.getLogger(LookupHandler.class);
 
-    // hard coded config for now
     private static String url = String.format("jdbc:mysql://%s:%s/%s",
             PropertiesHolder.databaseHost, PropertiesHolder.databasePort, PropertiesHolder.databaseSchema);
     private static String user = PropertiesHolder.databaseUser;
@@ -30,9 +29,8 @@ class LookupHandler {
     static int lookupId(String table, String column, String value) throws ClassNotFoundException, SQLException {
         String idLookupStatement = "SELECT id FROM (tbl) WHERE (col) = ?";
         Class.forName("com.mysql.jdbc.Driver");
-        if (connection == null) {
-            connection = DriverManager.getConnection(url, user, pass);
-        }
+        if (connection == null) connection = DriverManager.getConnection(url, user, pass);
+
         idLookupStatement = idLookupStatement.replace("(tbl)", table).replace("(col)", column);
         try {
             stmt = connection.prepareStatement(idLookupStatement);
@@ -55,9 +53,8 @@ class LookupHandler {
     static int lookupId(String table, List<String> columns, List<String> values) throws ClassNotFoundException, SQLException {
         String idLookupStatement = "SELECT id FROM (tbl) WHERE";
         Class.forName("com.mysql.jdbc.Driver");
-        if (connection == null) {
-            connection = DriverManager.getConnection(url, user, pass);
-        }
+        if (connection == null) connection = DriverManager.getConnection(url, user, pass);
+
         idLookupStatement = idLookupStatement.replace("(tbl)", table);
         for (String column : columns) {
             idLookupStatement += " " + column + " = " + "? AND";
@@ -81,14 +78,24 @@ class LookupHandler {
         return 1; // Unknown
     }
 
-    static List<Object> lookupDimension(String table, Map<String, String> columnsToReturn, String id) throws SQLException, ClassNotFoundException {
-        String dimensionLookupStatement = "SELECT (cols) FROM (tbl) WHERE id = ?";
+    /**
+     * Lookup from a dimension, return specified columns
+     *
+     * @param table           Table to lookup from
+     * @param columnsToReturn Columns to return. Format is: [ColumnName, Type]
+     * @param id              ID or Reference to look up using
+     * @param lookUpColumn    Column to look up using, (id / inv_{}_ref)
+     * @return Values from the dimension in the same order as the requested columns
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     */
+    static List<Object> lookupDimension(String table, Map<String, String> columnsToReturn, String id, String lookUpColumn) throws SQLException, ClassNotFoundException {
+        String dimensionLookupStatement = "SELECT (cols) FROM (tbl) WHERE " + lookUpColumn + " = ?";
         Class.forName("com.mysql.jdbc.Driver");
         List<Object> data = new ArrayList<>();
 
-        if (connection == null) {
-            connection = DriverManager.getConnection(url, user, pass);
-        }
+        if (connection == null) connection = DriverManager.getConnection(url, user, pass);
+
 
         dimensionLookupStatement = dimensionLookupStatement.replace("(tbl)", table);
         dimensionLookupStatement = dimensionLookupStatement.replace("(cols)", Arrays.toString(columnsToReturn.keySet().toArray()));
@@ -98,25 +105,46 @@ class LookupHandler {
 
             ResultSet resultSet = stmt.executeQuery();
 
-            if (resultSet.next()) {
-                for (Map.Entry column : columnsToReturn.entrySet()) {
-                    switch (column.getValue().toString()) {
-                        case "String":
-                            data.add(resultSet.getString(column.getKey().toString()));
-                            break;
-                        case "Integer":
-                            data.add(resultSet.getInt(column.getKey().toString()));
-                            break;
-                    }
-                }
+            if (resultSet.next())
+                for (Map.Entry column : columnsToReturn.entrySet())
+                    data.add(getValue(column.getKey().toString(), column.getValue().toString(), resultSet));
 
-            }
             return data;
         } catch (SQLException | NullPointerException e) {
             log.debug(String.format("Caught Exception %s looking up id in table %s, column %s, value %s. Returning 1.",
                     e.getMessage(), table, Arrays.toString(columnsToReturn.keySet().toArray()), id));
         }
         return null; // Unknown
+    }
+
+    static List<Object> customLookUp(String sql, Map<String, String> columnsBeingReturned) throws ClassNotFoundException, SQLException {
+        Class.forName("com.mysql.jdbc.Driver");
+        List<Object> data = new ArrayList<>();
+
+        if (connection == null) connection = DriverManager.getConnection(url, user, pass);
+
+        Statement customStatement = connection.createStatement();
+        ResultSet results = customStatement.executeQuery(sql);
+
+        while (results.next())
+            for (String columnName : columnsBeingReturned.keySet())
+                data.add(getValue(columnName, columnsBeingReturned.get(columnName), results));
+
+        return data;
+    }
+
+    private static Object getValue(String columnName, String type, ResultSet resultSet) throws SQLException {
+        switch (type) {
+            case "String":
+                return resultSet.getString(columnName);
+            case "Integer":
+                return resultSet.getInt(columnName);
+            case "Date":
+                // todo: convert date to string
+                return resultSet.getDate(columnName);
+            default:
+                throw new IllegalArgumentException("Unhandled type passed into GetValue.");
+        }
     }
 
     static ArrayList<Integer> lookUpDateTime(String timeStr) throws SQLException, ClassNotFoundException {
@@ -134,6 +162,20 @@ class LookupHandler {
             toReturn.add(LookupHandler.lookupId("time_d", "time_str", time));
         }
         return toReturn;
+    }
+
+    static int getScheduleId(String routeType, String routeRef) throws SQLException, ClassNotFoundException {
+        switch (routeType) {
+            case "VANROUTE":
+                return LookupHandler.lookupId("schedule_management_dh", "courier_round", routeRef);
+            case "ROUND":
+                if (routeRef == null || routeRef.equalsIgnoreCase("null"))
+                    return 1;
+                else
+                    return LookupHandler.lookupId("schedule_management_dh", "parcelshop_tier5", routeRef);
+            default:
+                return 1;
+        }
     }
 
 }

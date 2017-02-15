@@ -43,10 +43,11 @@ public class Parser {
         String payload = JsonPath.parse(msg).read("$.payload");
 
         itemState.setReference(parseByPath(payload, "$.transitionMetaDataView.invItemReference"));
-        itemState.setStateDateTimeLocal(parseByPath(payload, "$.transitionMetadata.eventDate"));
+        itemState.setMessageRef(parseByPath(payload, "$.transitionMetaDataView.reference"));
+        itemState.setStateDateTimeLocal(parseByPath(payload, "$.transitionMetaDataView.eventDate"));
         itemState.getItemStateClass().value = parseByPath(payload, "$.transitionMetaDataView.class");
-        itemState.getManifested().value = parseByPath(payload, "$.transitionMetaDataView.parameters.ManifestNum");
-        itemState.getItemStateSubClass().value = parseByPath(payload, "$.transitionMetadata.subClass");
+        itemState.setListRef(parseByPath(payload, "$.transitionMetaDataView.parameters.ManifestNum"));
+        itemState.getItemStateSubClass().value = parseByPath(payload, "$.transitionMetaDataView.subClass");
         itemState.setResourceRef(parseByPath(payload, "$.transitionMetaDataView.resourceReference"));
         itemState.setRouteRef(parseByPath(payload, "$.routeReference"));
         itemState.setRouteType(parseByPath(payload, "$.routeType"));
@@ -56,11 +57,21 @@ public class Parser {
         itemState.setEtaEndDate(parseByPath(payload, "$.transitionMetaDataView.parameters.ETAEndDT"));
         itemState.setAdditionalInfo(parseByPath(payload, "$.transitionMetaDataView.parameters.FreeFormText"));
         itemState.getTrackingPoint().value = parseByPath(payload, "$.transitionMetaDataView.parameters.TrackingPoint");
-        itemState.setFromShop(parseByPath(payload, "$.transitionMetaDataView.parameters.FromShopId"));
-        itemState.setToShop((parseByPath(payload, "$.transitionMetaDataView.parameters.ToShopId")));
+        itemState.getFromShop().value = (parseByPath(payload, "$.transitionMetaDataView.parameters.FromShopId"));
+        itemState.getToShop().value = ((parseByPath(payload, "$.transitionMetaDataView.parameters.ToShopId")));
         itemState.setBillingRef(parseByPath(payload, "$.transitionMetaDataView.parameters.BillingResRef"));
         itemState.getShopReference().value = (parseByPath(payload, "$.networkNodeLocationView.reference"));
+        itemState = replaceItemStateValues(itemState);
 
+        return itemState;
+    }
+
+
+    ItemState replaceItemStateValues(ItemState itemState) {
+        if (itemState.getEtaEndDate().isEmpty())
+            itemState.setEtaEndDate(null);
+        if (itemState.getEtaStartDate().isEmpty())
+            itemState.setEtaStartDate(null);
         return itemState;
     }
 
@@ -102,6 +113,7 @@ public class Parser {
             return "RouteType failed validation";
         if (itemState.getResourceRef() == null)
             return "Resource Reference failed validation";
+
         return null;
     }
 
@@ -114,9 +126,10 @@ public class Parser {
                 return null;
             } else {
                 log.warn(String.format("Path %s not found in message!", path));
+                // todo: null -> n/a
+                return null;
             }
         }
-        return null;
     }
 
 }

@@ -34,10 +34,8 @@ public class ItemState {
     private Field manifested = new Field();
     private String routeType;
     private int routeTypeId;
-    private String fromShop;
-    private int fromShopId;
-    private String toShop;
-    private int toShopId;
+    private Field toShop = new Field();
+    private Field fromShop = new Field();
     private int beginDateId;
     private String billingRef;
 
@@ -329,38 +327,6 @@ public class ItemState {
         this.routeTypeId = routeTypeId;
     }
 
-    public String getFromShop() {
-        return fromShop;
-    }
-
-    public void setFromShop(String fromShop) {
-        this.fromShop = fromShop;
-    }
-
-    public int getFromShopId() {
-        return fromShopId;
-    }
-
-    public void setFromShopId(int fromShopId) {
-        this.fromShopId = fromShopId;
-    }
-
-    public String getToShop() {
-        return toShop;
-    }
-
-    public void setToShop(String toShop) {
-        this.toShop = toShop;
-    }
-
-    public int getToShopId() {
-        return toShopId;
-    }
-
-    public void setToShopId(int toShopId) {
-        this.toShopId = toShopId;
-    }
-
     public String getBillingRef() {
         return billingRef;
     }
@@ -375,5 +341,21 @@ public class ItemState {
 
     public void setManifested(Field manifested) {
         this.manifested = manifested;
+    }
+
+    public Field getToShop() {
+        return toShop;
+    }
+
+    public void setToShop(Field toShop) {
+        this.toShop = toShop;
+    }
+
+    public Field getFromShop() {
+        return fromShop;
+    }
+
+    public void setFromShop(Field fromShop) {
+        this.fromShop = fromShop;
     }
 }
