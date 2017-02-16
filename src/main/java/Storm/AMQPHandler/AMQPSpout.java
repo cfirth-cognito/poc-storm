@@ -64,6 +64,7 @@ public class AMQPSpout implements IRichSpout {
         } catch (IOException | TimeoutException e) {
             e.printStackTrace();
             // reconnect
+            open(map, topologyContext, spoutOutputCollector);
         }
 
     }

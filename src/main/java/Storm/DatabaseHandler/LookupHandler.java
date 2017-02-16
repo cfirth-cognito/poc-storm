@@ -6,10 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Charlie on 28/01/2017.
@@ -29,7 +26,8 @@ class LookupHandler {
     static int lookupId(String table, String column, String value) throws ClassNotFoundException, SQLException {
         String idLookupStatement = "SELECT id FROM (tbl) WHERE (col) = ?";
         Class.forName("com.mysql.jdbc.Driver");
-        if (connection == null) connection = DriverManager.getConnection(url, user, pass);
+        if (connection == null || connection.isClosed() || !connection.isValid(5))
+            connection = DriverManager.getConnection(url, user, pass);
 
         idLookupStatement = idLookupStatement.replace("(tbl)", table).replace("(col)", column);
         try {
@@ -53,7 +51,8 @@ class LookupHandler {
     static int lookupId(String table, List<String> columns, List<String> values) throws ClassNotFoundException, SQLException {
         String idLookupStatement = "SELECT id FROM (tbl) WHERE";
         Class.forName("com.mysql.jdbc.Driver");
-        if (connection == null) connection = DriverManager.getConnection(url, user, pass);
+        if (connection == null || connection.isClosed() || !connection.isValid(5))
+            connection = DriverManager.getConnection(url, user, pass);
 
         idLookupStatement = idLookupStatement.replace("(tbl)", table);
         for (String column : columns) {
@@ -89,16 +88,20 @@ class LookupHandler {
      * @throws SQLException
      * @throws ClassNotFoundException
      */
-    static List<Object> lookupDimension(String table, Map<String, String> columnsToReturn, String id, String lookUpColumn) throws SQLException, ClassNotFoundException {
+    static List<Object> lookupDimension(String table, TreeMap<String, String> columnsToReturn, String id, String lookUpColumn) throws SQLException, ClassNotFoundException {
         String dimensionLookupStatement = "SELECT (cols) FROM (tbl) WHERE " + lookUpColumn + " = ?";
         Class.forName("com.mysql.jdbc.Driver");
         List<Object> data = new ArrayList<>();
 
-        if (connection == null) connection = DriverManager.getConnection(url, user, pass);
+        if (connection == null || connection.isClosed() || !connection.isValid(2))
+            connection = DriverManager.getConnection(url, user, pass);
 
 
         dimensionLookupStatement = dimensionLookupStatement.replace("(tbl)", table);
-        dimensionLookupStatement = dimensionLookupStatement.replace("(cols)", Arrays.toString(columnsToReturn.keySet().toArray()));
+        dimensionLookupStatement = dimensionLookupStatement.replace("(cols)",
+                Arrays.toString(columnsToReturn.keySet().toArray())
+                        .replace("[", "")
+                        .replace("]", ""));
         try {
             stmt = connection.prepareStatement(dimensionLookupStatement);
             stmt.setString(1, id);
@@ -108,6 +111,7 @@ class LookupHandler {
             if (resultSet.next())
                 for (Map.Entry column : columnsToReturn.entrySet())
                     data.add(getValue(column.getKey().toString(), column.getValue().toString(), resultSet));
+
 
             return data;
         } catch (SQLException | NullPointerException e) {
@@ -121,7 +125,8 @@ class LookupHandler {
         Class.forName("com.mysql.jdbc.Driver");
         List<Object> data = new ArrayList<>();
 
-        if (connection == null) connection = DriverManager.getConnection(url, user, pass);
+        if (connection == null || connection.isClosed() || !connection.isValid(5))
+            connection = DriverManager.getConnection(url, user, pass);
 
         Statement customStatement = connection.createStatement();
         ResultSet results = customStatement.executeQuery(sql);
@@ -153,7 +158,16 @@ class LookupHandler {
         if (timeStr.contains("T")) {
             toReturn.add(LookupHandler.lookupId("date_d", "full_date",
                     timeStr.substring(0, timeStr.indexOf("T"))));
-            String time = timeStr.substring(timeStr.indexOf("T"), timeStr.indexOf("Z")).split(":")[0] + ":00:00";
+            log.info(timeStr);
+            String time = null;
+            // todo: just .length? instead of looking for Z/+/-
+            time = timeStr.substring(timeStr.indexOf("T")).split(":")[0] + ":00:00";
+//            if (timeStr.contains("Z"))
+//                time = timeStr.substring(timeStr.indexOf("T"), timeStr.indexOf("Z")).split(":")[0] + ":00:00";
+//            else if (timeStr.contains("+"))
+//                time = timeStr.substring(timeStr.indexOf("T"), timeStr.indexOf("+")).split(":")[0] + ":00:00";
+//            else
+
             toReturn.add(LookupHandler.lookupId("time_d", "time_str", time));
         } else {
             String[] dateParts = timeStr.split(" ");

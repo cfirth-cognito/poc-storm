@@ -35,7 +35,8 @@ public class ParseAMQPBolt implements IRichBolt {
         Parser parser = new Parser();
         Values emitValues = new Values();
         String msgBody = tuple.getStringByField("body");
-        msgBody = msgBody.replaceAll("\"extensionsXml.*  ", "").replace("\\\"sla", "\"sla");
+        int index = msgBody.indexOf("extensionsXml");
+        msgBody = msgBody.replaceAll("\\n \"extensionsXml.*,", "");
 
         log.debug(String.format("Parsing AMQP message %s..", tuple.getMessageId().toString()));
 

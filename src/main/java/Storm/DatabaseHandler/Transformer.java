@@ -15,6 +15,7 @@ import java.util.*;
 public class Transformer {
     private static final Logger log = LoggerFactory.getLogger(Transformer.class);
 
+    private static int DATE_LENGTH = 8;
 
     Values transformItem(Item item) {
         try {
@@ -57,8 +58,26 @@ public class Transformer {
 
     Values transformItemState(ItemState itemState) {
         try {
-            if (itemState.getItemId() == null)
-                itemState.setItemId(LookupHandler.lookupId("inv_item_d", "inv_item_ref", itemState.getReference()));
+            log.info("Transforming ItemState. ItemID: " + itemState.getItemId());
+            if (itemState.getItemId() == null) {
+                TreeMap<String, String> columns = new TreeMap<>(); // TreeMap to ensure ordered results
+                columns.put("id", "Integer");
+                columns.put("inv_item_class", "String");
+                columns.put("inv_item_subclass", "String");
+                columns.put("inv_item_status", "String");
+                log.info("Looking up Item Dimension");
+                List<Object> itemDimension = LookupHandler.lookupDimension("inv_item_d", columns, itemState.getReference(), "inv_item_ref");
+                if (itemDimension != null && !itemDimension.isEmpty()) {
+                    itemState.setItemId((Integer) itemDimension.get(0));
+                    itemState.getItemClass().value = (String) itemDimension.get(1);
+                    itemState.setStatus((String) itemDimension.get(2));
+                    itemState.getItemSubClass().value = ((String) itemDimension.get(3));
+
+                } else {
+                    log.info(String.format("No Item Dimension found for %s", itemState.getReference()));
+                    itemState.setItemId(1);
+                }
+            }
 
             itemState.getItemClass().id = LookupHandler.lookupId("inv_item_class_type_d", Arrays.asList("class", "subclass")
                     , Arrays.asList(itemState.getItemClass().value, itemState.getItemSubClass().value));
@@ -85,34 +104,36 @@ public class Transformer {
             itemState.setResourceId(LookupHandler.lookupId("resource_management_dh", "resource_ref", itemState.getResourceRef()));
 
             /* Lookup List */
-            Map<String, String> columns = new HashMap<>();
+            TreeMap<String, String> columns = new TreeMap<>();
             columns.put("id", "Integer");
             columns.put("begin_date", "Date");
             columns.put("begin_date_id", "Integer");
 
             List<Object> listDimension = LookupHandler.lookupDimension("inv_list_d", columns, itemState.getListRef(), "inv_list_ref");
-            if (listDimension != null) {
-                itemState.setListId((Integer) listDimension.get(0));
-                itemState.setBeginDate((String) listDimension.get(1));
-                itemState.setBeginDateId((Integer) listDimension.get(2));
+            if (listDimension != null && !listDimension.isEmpty()) {
+                itemState.setBeginDate((String) listDimension.get(0));
+                itemState.setBeginDateId((Integer) listDimension.get(1));
+                itemState.setListId((Integer) listDimension.get(2));
             } else {
                 itemState.setListId(1);
 
                 /* Special BeginDate handling. THERE MUST ALWAYS BE A BEGIN DATE ASSOCIATED WITH A STATE. */
-                columns = new HashMap<>();
+                columns = new TreeMap<>();
                 columns.put("begin_date_id", "Integer");
                 List<Object> lookup = LookupHandler.customLookUp(
                         "SELECT MAX(begin_date_id) AS begin_date_id FROM inv_item_state_f WHERE inv_item_ref = '"
                                 + itemState.getReference() + "';", columns);
-                itemState.setBeginDateId((lookup.isEmpty()) ? itemState.getStateDateId() : (Integer) lookup.get(0));
+                itemState.setBeginDateId((lookup.isEmpty() || (int) lookup.get(0) == 0) ? itemState.getStateDateId() : (Integer) lookup.get(0));
             }
-
 
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
         }
 
-        itemState.setStateDateTimeLocal(itemState.getStateDateTimeLocal().replace("Z", "").replace("T", " "));
+        System.out.println(itemState.getStateDateTimeLocal());
+        itemState.setStateDateTimeLocal(transformDate(itemState.getStateDateTimeLocal()));
+        itemState.setEtaStartDate(transformDate(itemState.getEtaStartDate()));
+        itemState.setEtaEndDate(transformDate(itemState.getEtaEndDate()));
 
         Values output = new Values();
         output.add(itemState.getReference());
@@ -146,5 +167,27 @@ public class Transformer {
         output.add(itemState.getBillingRef());
 
         return output;
+    }
+
+
+    String transformDate(String date) {
+        System.out.println(date);
+
+        if (date == null) return null;
+
+        if (date.contains("."))
+            return date.substring(0, date.lastIndexOf(".") + 3);
+        else if (date.contains("Z"))
+            return date.replace("Z", "").replace("T", " ");
+        else
+            return null;
+
+
+        //            if (itemState.getStateDateTimeLocal().contains("+"))
+//                itemState.setStateDateTimeLocal(itemState.getStateDateTimeLocal().substring(0, itemState.getStateDateTimeLocal().lastIndexOf("+") - 1));
+//        }
+
+        //2017-02-14T17:22:16.078Z
+//        if (!itemState.getStateDateTimeLocal().contains("+") && !itemState.getStateDateTimeLocal().contains("Z"))
     }
 }

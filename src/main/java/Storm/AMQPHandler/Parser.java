@@ -68,9 +68,9 @@ public class Parser {
 
 
     ItemState replaceItemStateValues(ItemState itemState) {
-        if (itemState.getEtaEndDate().isEmpty())
+        if (itemState.getEtaEndDate() != null && itemState.getEtaEndDate().isEmpty())
             itemState.setEtaEndDate(null);
-        if (itemState.getEtaStartDate().isEmpty())
+        if (itemState.getEtaStartDate() != null && itemState.getEtaStartDate().isEmpty())
             itemState.setEtaStartDate(null);
         return itemState;
     }

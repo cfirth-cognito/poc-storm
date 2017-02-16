@@ -28,7 +28,8 @@ public class ErrorBolt implements IRichBolt {
     public void execute(Tuple tuple) {
         log.error(String.format("Caught error with tuple. [Error Msg]: %s. Logged error in DB and ack'd offending tuple.",
                 tuple.getStringByField("error_msg")));
-        _collector.ack(tuple);
+        _collector.fail(tuple);
+//        _collector.ack(tuple);
     }
 
     @Override
