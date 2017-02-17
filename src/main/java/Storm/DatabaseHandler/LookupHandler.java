@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * Created by Charlie on 28/01/2017.
  */
-class LookupHandler {
+public class LookupHandler {
     private static final Logger log = LoggerFactory.getLogger(LookupHandler.class);
 
     private static String url = String.format("jdbc:mysql://%s:%s/%s",
@@ -23,7 +23,7 @@ class LookupHandler {
     private static PreparedStatement stmt;
 
     // Throw any exceptions we encounter. This ensure's the bolt worker is killed, and another bolt spun up to try again.
-    static int lookupId(String table, String column, String value) throws ClassNotFoundException, SQLException {
+    public static int lookupId(String table, String column, String value) throws ClassNotFoundException, SQLException {
         String idLookupStatement = "SELECT id FROM (tbl) WHERE (col) = ?";
         Class.forName("com.mysql.jdbc.Driver");
         if (connection == null || connection.isClosed() || !connection.isValid(5))
@@ -48,7 +48,7 @@ class LookupHandler {
         return 1; // Unknown
     }
 
-    static int lookupId(String table, List<String> columns, List<String> values) throws ClassNotFoundException, SQLException {
+    public static int lookupId(String table, List<String> columns, List<String> values) throws ClassNotFoundException, SQLException {
         String idLookupStatement = "SELECT id FROM (tbl) WHERE";
         Class.forName("com.mysql.jdbc.Driver");
         if (connection == null || connection.isClosed() || !connection.isValid(5))
@@ -88,7 +88,7 @@ class LookupHandler {
      * @throws SQLException
      * @throws ClassNotFoundException
      */
-    static List<Object> lookupDimension(String table, TreeMap<String, String> columnsToReturn, String id, String lookUpColumn) throws SQLException, ClassNotFoundException {
+    public static List<Object> lookupDimension(String table, TreeMap<String, String> columnsToReturn, String id, String lookUpColumn) throws SQLException, ClassNotFoundException {
         String dimensionLookupStatement = "SELECT (cols) FROM (tbl) WHERE " + lookUpColumn + " = ?";
         Class.forName("com.mysql.jdbc.Driver");
         List<Object> data = new ArrayList<>();
@@ -121,7 +121,7 @@ class LookupHandler {
         return null; // Unknown
     }
 
-    static List<Object> customLookUp(String sql, Map<String, String> columnsBeingReturned) throws ClassNotFoundException, SQLException {
+    public static List<Object> customLookUp(String sql, Map<String, String> columnsBeingReturned) throws ClassNotFoundException, SQLException {
         Class.forName("com.mysql.jdbc.Driver");
         List<Object> data = new ArrayList<>();
 
@@ -152,7 +152,7 @@ class LookupHandler {
         }
     }
 
-    static ArrayList<Integer> lookUpDateTime(String timeStr) throws SQLException, ClassNotFoundException {
+    public static ArrayList<Integer> lookUpDateTime(String timeStr) throws SQLException, ClassNotFoundException {
         ArrayList<Integer> toReturn = new ArrayList<>();
 
         if (timeStr.contains("T")) {
@@ -178,7 +178,7 @@ class LookupHandler {
         return toReturn;
     }
 
-    static int getScheduleId(String routeType, String routeRef) throws SQLException, ClassNotFoundException {
+    public static int getScheduleId(String routeType, String routeRef) throws SQLException, ClassNotFoundException {
         switch (routeType) {
             case "VANROUTE":
                 return LookupHandler.lookupId("schedule_management_dh", "courier_round", routeRef);

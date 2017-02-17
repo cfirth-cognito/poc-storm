@@ -1,8 +1,8 @@
 package Storm.AMQPHandler;
 
-import Storm.AMQPHandler.JSONObj.Item.Item;
-import Storm.AMQPHandler.JSONObj.Item.ItemState;
-import Storm.Util.Field;
+import Storm.AMQPHandler.JSONObjects.Item;
+import Storm.AMQPHandler.JSONObjects.ItemState;
+import Storm.AMQPHandler.JSONObjects.ListObj;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import org.slf4j.Logger;
@@ -66,8 +66,26 @@ public class Parser {
         return itemState;
     }
 
+    ListObj parseList(String msg) {
+        ListObj listObj = new ListObj();
+        String payload = JsonPath.parse(msg).read("$.payload");
 
-    ItemState replaceItemStateValues(ItemState itemState) {
+        listObj.setReference(parseByPath(payload, "$.listMetadata.reference"));
+        listObj.getType().value = parseByPath(payload, "$.listMetadata.type");
+        listObj.getSubType().value = parseByPath(payload, "$.listMetadata.subType");
+        listObj.getListClass().value = parseByPath(payload, "$.listMetadata.listClass");
+        listObj.setEventDate(parseByPath(payload, "$.listMetadata.eventDate"));
+        listObj.getBeginDate().value = parseByPath(payload, "$.beginDate");
+        listObj.getSchedueleRef().value = parseByPath(payload, "$.routeReference");
+        listObj.getRouteType().value = parseByPath(payload, "$.routeType");
+        listObj.getResource().value = parseByPath(payload, "$.listMetadata.parameters.ResourceRef");
+        listObj.getVanRouteId().value = parseByPath(payload, "$.listMetadata.parameters.VanRouteId");
+
+        return listObj;
+    }
+
+
+    private ItemState replaceItemStateValues(ItemState itemState) {
         if (itemState.getEtaEndDate() != null && itemState.getEtaEndDate().isEmpty())
             itemState.setEtaEndDate(null);
         if (itemState.getEtaStartDate() != null && itemState.getEtaStartDate().isEmpty())
@@ -103,7 +121,7 @@ public class Parser {
     String validateItemState(ItemState itemState) {
         if (itemState.getReference() == null)
             return "Reference failed validation";
-        if (itemState.getItemClass() == null)
+        if (itemState.getItemClass().value == null)
             return "Class failed validation";
         if (itemState.getStateDateTimeLocal() == null)
             return "EventDate failed validation";
@@ -113,6 +131,24 @@ public class Parser {
             return "RouteType failed validation";
         if (itemState.getResourceRef() == null)
             return "Resource Reference failed validation";
+        return null;
+    }
+
+    String validateList(ListObj listObj) {
+        if(listObj.getReference() == null)
+            return "Reference failed validation";
+        if(listObj.getBeginDate().value == null)
+            return "BeginDate failed validation";
+        if(listObj.getListClass().value == null)
+            return "ListObj Class failed validation";
+        if(listObj.getType().value == null)
+            return "ListObj Type failed validation";
+        if(listObj.getRouteType().value == null)
+            return "Route Type failed validation";
+        if(listObj.getEventDate() == null)
+            return "Event Date failed validation";
+        if(listObj.getSchedueleRef().value == null)
+            return "Route Ref failed validation";
 
         return null;
     }

@@ -1,4 +1,4 @@
-package Storm.AMQPHandler.JSONObj.Item;
+package Storm.AMQPHandler.JSONObjects;
 
 /**
  * Created by Charlie on 28/01/2017.

@@ -58,8 +58,8 @@ public class ItemState {
     }
 
     public static Fields fields() {
-//        List<String> fields = columns.stream().map(Column::getColumnName).collect(Collectors.toList());
-//        List<String> fields = columns.stream().map(Column::getColumnName).collect(Collectors.toList());
+//        ListObj<String> fields = columns.stream().map(Column::getColumnName).collect(Collectors.toList());
+//        ListObj<String> fields = columns.stream().map(Column::getColumnName).collect(Collectors.toList());
         List<String> fields = new ArrayList<>();
         for (Column column : columns) {
             fields.add(column.getColumnName());

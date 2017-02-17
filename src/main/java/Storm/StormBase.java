@@ -4,9 +4,10 @@ import Storm.AMQPHandler.AMQPSpout;
 import Storm.AMQPHandler.ParseAMQPBolt;
 import Storm.DatabaseHandler.DBObjects.Item;
 import Storm.DatabaseHandler.DBObjects.ItemState;
+import Storm.DatabaseHandler.DBObjects.List;
 import Storm.DatabaseHandler.InsertBolts.InsertBoltImpl;
-import Storm.DatabaseHandler.ItemStateTransformBolt;
-import Storm.DatabaseHandler.ItemTransformBolt;
+import Storm.Transformers.ItemStateTransformBolt;
+import Storm.Transformers.ItemTransformBolt;
 import Storm.ErrorHandler.ErrorBolt;
 import Storm.Util.PropertiesHolder;
 import org.apache.storm.LocalCluster;
@@ -14,7 +15,6 @@ import org.apache.storm.StormSubmitter;
 import org.apache.storm.generated.AlreadyAliveException;
 import org.apache.storm.generated.AuthorizationException;
 import org.apache.storm.generated.InvalidTopologyException;
-import org.apache.storm.jdbc.bolt.JdbcInsertBolt;
 import org.apache.storm.jdbc.common.ConnectionProvider;
 import org.apache.storm.jdbc.common.HikariCPConnectionProvider;
 import org.apache.storm.jdbc.mapper.JdbcMapper;
@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * Created by Charlie on 28/01/2017.
@@ -48,6 +47,12 @@ public class StormBase {
     private static JdbcMapper itemStateJdbcMapper;
     private static InsertBoltImpl itemStatePersistenceBolt;
 
+    /* ListObj Topology */
+    private static AMQPSpout listAMQPSpout;
+    private static ItemTransformBolt listTransformBolt;
+    private static JdbcMapper listJdbcMapper;
+    private static InsertBoltImpl listPersistenceBolt;
+
     public static void main(String[] args) throws InterruptedException, IOException {
         TopologyBuilder builder = new TopologyBuilder();
         Map<String, Object> configMap = new HashMap<>();
@@ -66,7 +71,8 @@ public class StormBase {
         ParseAMQPBolt parseAMQPBolt = new ParseAMQPBolt();
         builder.setBolt("parse_amqp_bolt", parseAMQPBolt)
                 .shuffleGrouping("ItemAMQPSpout", "item")
-                .shuffleGrouping("ItemStateAMQPSpout", "item-state");
+                .shuffleGrouping("ItemStateAMQPSpout", "item-state")
+                .shuffleGrouping("ListAMQPSpout", "list");
 
         /* Build Topology */
 
@@ -125,6 +131,21 @@ public class StormBase {
         return builder;
     }
 
+    private static TopologyBuilder buildListTopology(TopologyBuilder builder) {
+        listPersistenceBolt = new InsertBoltImpl(connectionProvider, listJdbcMapper)
+                .withInsertQuery("insert into inv_list_d (" + List.columnsToString() + ") values (" + List.getPlaceholders() + ")")
+                .withQueryTimeoutSecs(30);
+
+        builder.setSpout("ListAMQPSpout", listAMQPSpout);
+        builder.setBolt("list_transform_bolt", listTransformBolt)
+                .shuffleGrouping("parse_amqp_bolt", "list");
+        builder.setBolt("persist_bolt", listPersistenceBolt)
+                .shuffleGrouping("list_transform_bolt", "list");
+
+        return builder;
+    }
+
+
     /* Error Handling */
     /* Handle inserting errors to PDI_LOGGING, and failing the tuple gracefully */
     /* TODO: database to log to     */
@@ -150,6 +171,12 @@ public class StormBase {
                 PropertiesHolder.rabbitUser, PropertiesHolder.rabbitPass, PropertiesHolder.itemStateQueue, "item-state");
         itemStateTransformBolt = new ItemStateTransformBolt();
         itemStateJdbcMapper = new SimpleJdbcMapper(ItemState.getColumns());
+
+
+        listAMQPSpout = new AMQPSpout(PropertiesHolder.rabbitHost, PropertiesHolder.rabbitPort, PropertiesHolder.rabbitVHost,
+                PropertiesHolder.rabbitUser, PropertiesHolder.rabbitPass, PropertiesHolder.listQueue, "list");
+//        itemTransformBolt = new ItemTransformBolt();
+        listJdbcMapper = new SimpleJdbcMapper(List.getColumns());
     }
 }
 

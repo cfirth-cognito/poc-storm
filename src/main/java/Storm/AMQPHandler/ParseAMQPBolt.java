@@ -1,7 +1,8 @@
 package Storm.AMQPHandler;
 
-import Storm.AMQPHandler.JSONObj.Item.Item;
-import Storm.AMQPHandler.JSONObj.Item.ItemState;
+import Storm.AMQPHandler.JSONObjects.Item;
+import Storm.AMQPHandler.JSONObjects.ItemState;
+import Storm.AMQPHandler.JSONObjects.ListObj;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
@@ -59,9 +60,16 @@ public class ParseAMQPBolt implements IRichBolt {
                     _collector.emit("ErrorStream", new Values(parser.validateItemState(itemState)));
                 }
                 break;
-            case "list":
+            case "listObj":
+                ListObj listObj = parser.parseList(msgBody);
+                if (parser.validateList(listObj) == null) {
+                    emitValues.add(listObj);
+                    _collector.emit("listObj", tuple, emitValues);
+                } else {
+                    _collector.emit("ErrorStream", new Values(parser.validateList(listObj)));
+                }
                 break;
-            case "list-state":
+            case "listObj-state":
                 break;
         }
         _collector.ack(tuple);
@@ -75,6 +83,7 @@ public class ParseAMQPBolt implements IRichBolt {
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declareStream("item", new Fields("item"));
         outputFieldsDeclarer.declareStream("item-state", new Fields("item-state"));
+        outputFieldsDeclarer.declareStream("list", new Fields("list"));
         outputFieldsDeclarer.declareStream("ErrorStream", new Fields("error_msg"));
     }
 

@@ -1,4 +1,4 @@
-package Storm.AMQPHandler.JSONObj.Item;
+package Storm.AMQPHandler.JSONObjects;
 
 import Storm.Util.Field;
 

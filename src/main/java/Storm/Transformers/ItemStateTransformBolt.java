@@ -1,6 +1,6 @@
-package Storm.DatabaseHandler;
+package Storm.Transformers;
 
-import Storm.AMQPHandler.JSONObj.Item.ItemState;
+import Storm.AMQPHandler.JSONObjects.ItemState;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
