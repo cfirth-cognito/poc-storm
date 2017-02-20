@@ -111,8 +111,13 @@ public class Transformer {
 
             itemState.getItemClass().id = LookupHandler.lookupId("inv_item_class_type_d", Arrays.asList("class", "subclass")
                     , Arrays.asList(itemState.getItemClass().value, itemState.getItemSubClass().value));
-            itemState.getItemStateClass().id = LookupHandler.lookupId("inv_item_state_type_d", Arrays.asList("class", "subclass"),
-                    Arrays.asList(itemState.getItemStateClass().value, itemState.getItemStateSubClass().value));
+            itemState.getItemStateClass().id = LookupHandler.lookupId("inv_item_state_type_d", Arrays.asList("class", "subclass", "outcome_class", "outcome_subclass"),
+                    Arrays.asList(itemState.getItemStateClass().value, itemState.getItemStateSubClass().value, itemState.getOutcomeClass().value, itemState.getOutcomeSubClass().value));
+
+            /* Handle the mobile sending in unsupported outcomes, but with a valid class & subclass combination */
+            if (itemState.getItemStateClass().id == 1)
+                itemState.getItemStateClass().id = LookupHandler.lookupId("inv_item_state_type_d", Arrays.asList("class", "subclass", "outcome_class", "outcome_subclass"),
+                        Arrays.asList(itemState.getItemStateClass().value, itemState.getItemStateSubClass().value, "N/A", "N/A"));
             itemState.setStatusId(LookupHandler.lookupId("inv_item_status_type_d", "class", itemState.getStatus()));
 
             ArrayList<Integer> dateTimeIds = LookupHandler.lookUpDateTime(itemState.getStateDateTimeLocal());
@@ -126,7 +131,7 @@ public class Transformer {
             itemState.setRouteTypeId(LookupHandler.lookupId("route_type_d", "route_type_display", itemState.getRouteType()));
             itemState.getManifested().id = (itemState.getListRef() == null || itemState.getListRef().equalsIgnoreCase("N/A")) ? 1 : 2;
 
-            itemState.getTrackingPoint().id = LookupHandler.lookupId("tracking_point_d", "tracking_point_code", itemState.getTrackingPoint().value);
+            itemState.getTrackingPoint().id = LookupHandler.lookupId("tracking_points_d", "tracking_point_code", itemState.getTrackingPoint().value);
             itemState.getFromShop().id = LookupHandler.lookupId("schedule_management_dh", "parcelshop_tier5", itemState.getFromShop().value);
             itemState.getToShop().id = LookupHandler.lookupId("schedule_management_dh", "parcelshop_tier5", itemState.getToShop().value);
 
@@ -245,7 +250,7 @@ public class Transformer {
         if (date == null) return null;
 
         if (date.contains("."))
-            return date.substring(0, date.lastIndexOf(".") + 3);
+            return date.substring(0, date.lastIndexOf(".") + 4);
         else if (date.contains("Z"))
             return date.replace("Z", "").replace("T", " ");
         else

@@ -22,12 +22,30 @@ public class LookupHandler {
     private static Connection connection;
     private static PreparedStatement stmt;
 
+    private static Connection checkConnection() throws SQLException {
+        try {
+            if (connection == null || connection.isClosed() || !connection.isValid(5)) {
+                log.info("Creating new connection. Connection: " + connection);
+                if (connection != null) {
+                    log.info("Creating new connection. Connection was closed: " + connection.isClosed() + " or valid: " + connection.isValid(5));
+                    connection.close();
+                }
+                connection = DriverManager.getConnection(url, user, pass);
+            }
+        } catch (Exception e) {
+            log.error("Caught exception closing existing DB connection. Continuing.");
+        }
+
+        if (stmt != null)
+            stmt.close();
+        return connection;
+    }
+
     // Throw any exceptions we encounter. This ensure's the bolt worker is killed, and another bolt spun up to try again.
     public static int lookupId(String table, String column, String value) throws ClassNotFoundException, SQLException {
         String idLookupStatement = "SELECT id FROM (tbl) WHERE (col) = ?";
         Class.forName("com.mysql.jdbc.Driver");
-        if (connection == null || connection.isClosed() || !connection.isValid(5))
-            connection = DriverManager.getConnection(url, user, pass);
+        connection = checkConnection();
 
         idLookupStatement = idLookupStatement.replace("(tbl)", table).replace("(col)", column);
         try {
@@ -51,8 +69,7 @@ public class LookupHandler {
     public static int lookupId(String table, List<String> columns, List<String> values) throws ClassNotFoundException, SQLException {
         String idLookupStatement = "SELECT id FROM (tbl) WHERE";
         Class.forName("com.mysql.jdbc.Driver");
-        if (connection == null || connection.isClosed() || !connection.isValid(5))
-            connection = DriverManager.getConnection(url, user, pass);
+        connection = checkConnection();
 
         idLookupStatement = idLookupStatement.replace("(tbl)", table);
         for (String column : columns) {
@@ -62,17 +79,21 @@ public class LookupHandler {
 
         try {
             stmt = connection.prepareStatement(idLookupStatement);
-
-            for (String value : values)
-                stmt.setString(values.indexOf(value) + 1, value);
+            int count = 1;
+            for (String value : values) {
+                if (value == null || value.isEmpty())
+                    value = "N/A";
+                stmt.setString(count, value);
+                count++;
+            }
 
             ResultSet resultSet = stmt.executeQuery();
             if (resultSet.next()) {
                 return resultSet.getInt(1);
             }
         } catch (SQLException | NullPointerException e) {
-            log.debug(String.format("Caught Exception %s looking up id in table %s, columns %s, values %s. Returning 1.",
-                    e.getMessage(), table, columns, values));
+            log.error(String.format("Caught Exception %s looking up id in table %s, columns %s, values %s, query %s. Returning 1.",
+                    e.getMessage(), table, columns, values, idLookupStatement));
         }
         return 1; // Unknown
     }
@@ -80,8 +101,7 @@ public class LookupHandler {
     public static String lookupColumn(String table, String column, String wColumn, String value) throws SQLException, ClassNotFoundException {
         String idLookupStatement = "SELECT " + column + " FROM (tbl) WHERE (col) = ?";
         Class.forName("com.mysql.jdbc.Driver");
-        if (connection == null || connection.isClosed() || !connection.isValid(5))
-            connection = DriverManager.getConnection(url, user, pass);
+        connection = checkConnection();
 
         idLookupStatement = idLookupStatement.replace("(tbl)", table).replace("(col)", wColumn);
         try {
@@ -118,8 +138,7 @@ public class LookupHandler {
         Class.forName("com.mysql.jdbc.Driver");
         List<Object> data = new ArrayList<>();
 
-        if (connection == null || connection.isClosed() || !connection.isValid(2))
-            connection = DriverManager.getConnection(url, user, pass);
+        connection = checkConnection();
 
 
         dimensionLookupStatement = dimensionLookupStatement.replace("(tbl)", table);
@@ -137,7 +156,7 @@ public class LookupHandler {
                 for (Map.Entry column : columnsToReturn.entrySet())
                     data.add(getValue(column.getKey().toString(), column.getValue().toString(), resultSet));
 
-
+            resultSet.close();
             return data;
         } catch (SQLException | NullPointerException e) {
             log.debug(String.format("Caught Exception %s looking up id in table %s, column %s, value %s. Returning 1.",
@@ -150,8 +169,7 @@ public class LookupHandler {
         Class.forName("com.mysql.jdbc.Driver");
         List<Object> data = new ArrayList<>();
 
-        if (connection == null || connection.isClosed() || !connection.isValid(5))
-            connection = DriverManager.getConnection(url, user, pass);
+        connection = checkConnection();
 
         Statement customStatement = connection.createStatement();
         ResultSet results = customStatement.executeQuery(sql);
@@ -160,6 +178,7 @@ public class LookupHandler {
             for (String columnName : columnsBeingReturned.keySet())
                 data.add(getValue(columnName, columnsBeingReturned.get(columnName), results));
 
+        results.close();
         return data;
     }
 

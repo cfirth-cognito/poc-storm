@@ -59,6 +59,8 @@ public class ItemStateTransformBolt implements IRichBolt {
         state.getItemStateClass().value = "CREATED";
         state.getManifested().value = "N/A";
         state.getItemStateSubClass().value = "N/A";
+        state.getOutcomeClass().value = "N/A";
+        state.getOutcomeSubClass().value = "N/A";
         state.setResourceId(1);
         state.setListId(1);
         state.setNetworkId(1);

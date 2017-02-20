@@ -5,6 +5,7 @@ import Storm.AMQPHandler.JSONObjects.ItemState;
 import Storm.AMQPHandler.JSONObjects.ListObj;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
+import net.minidev.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +17,7 @@ public class Parser {
 
     Item parseItem(String msg) {
         Item item = new Item();
+
         String payload = JsonPath.parse(msg).read("$.payload");
 
         item.setReference(parseByPath(payload, "$.itemMetadata.reference"));
@@ -34,6 +36,7 @@ public class Parser {
         item.setPostcode(parseByPath(payload, "$.customerLocation.address.postCode"));
         item.setShopReference(parseByPath(payload, "$.parcelShopLocation.reference"));
 
+
         return item;
     }
 
@@ -46,17 +49,17 @@ public class Parser {
         itemState.setMessageRef(parseByPath(payload, "$.transitionMetaDataView.reference"));
         itemState.setStateDateTimeLocal(parseByPath(payload, "$.transitionMetaDataView.eventDate"));
         itemState.getItemStateClass().value = parseByPath(payload, "$.transitionMetaDataView.class");
-        itemState.setListRef(parseByPath(payload, "$.transitionMetaDataView.parameters.ManifestNum"));
-        itemState.getItemStateSubClass().value = parseByPath(payload, "$.transitionMetaDataView.subClass");
+        itemState.setListRef(parseByPath(payload, "$.transitionMetaDataView.parameters.ManifestNum", "N/A"));
+        itemState.getItemStateSubClass().value = parseByPath(payload, "$.transitionMetaDataView.subClass", "N/A");
         itemState.setResourceRef(parseByPath(payload, "$.transitionMetaDataView.resourceReference"));
         itemState.setRouteRef(parseByPath(payload, "$.routeReference"));
         itemState.setRouteType(parseByPath(payload, "$.routeType"));
-        itemState.getOutcomeClass().value = (parseByPath(payload, "$.transitionMetaDataView.outcomeCode"));
-        itemState.getOutcomeSubClass().value = parseByPath(payload, "$.transitionMetaDataView.outcomeText");
+        itemState.getOutcomeClass().value = (parseByPath(payload, "$.transitionMetaDataView.outcomeCode", "N/A"));
+        itemState.getOutcomeSubClass().value = parseByPath(payload, "$.transitionMetaDataView.outcomeText", "N/A");
         itemState.setEtaStartDate(parseByPath(payload, "$.transitionMetaDataView.parameters.ETAStartDT"));
         itemState.setEtaEndDate(parseByPath(payload, "$.transitionMetaDataView.parameters.ETAEndDT"));
         itemState.setAdditionalInfo(parseByPath(payload, "$.transitionMetaDataView.parameters.FreeFormText"));
-        itemState.getTrackingPoint().value = parseByPath(payload, "$.transitionMetaDataView.parameters.TrackingPoint");
+        itemState.getTrackingPoint().value = parseByPath(payload, "$.lineItems.[0].parameters.TrackingPoint");
         itemState.getFromShop().value = (parseByPath(payload, "$.transitionMetaDataView.parameters.FromShopId"));
         itemState.getToShop().value = ((parseByPath(payload, "$.transitionMetaDataView.parameters.ToShopId")));
         itemState.setBillingRef(parseByPath(payload, "$.transitionMetaDataView.parameters.BillingResRef"));
@@ -164,6 +167,20 @@ public class Parser {
                 log.warn(String.format("Path %s not found in message!", path));
                 // todo: null -> n/a
                 return null;
+            }
+        }
+    }
+
+    private String parseByPath(String msg, String path, String defaultString) {
+        try {
+            return ((String) JsonPath.parse(msg).read(path)).isEmpty() ? defaultString : (String) JsonPath.parse(msg).read(path);
+        } catch (PathNotFoundException e) {
+            if (e.getMessage().contains("'null")) { // Null value in JSON - valid, handle properly
+                log.debug("Gracefully handling a null json value in message");
+                return null;
+            } else {
+                log.warn(String.format("Path %s not found in message! Returning default.", path));
+                return defaultString;
             }
         }
     }
