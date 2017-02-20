@@ -60,16 +60,16 @@ public class ParseAMQPBolt implements IRichBolt {
                     _collector.emit("ErrorStream", new Values(parser.validateItemState(itemState)));
                 }
                 break;
-            case "listObj":
+            case "list":
                 ListObj listObj = parser.parseList(msgBody);
                 if (parser.validateList(listObj) == null) {
                     emitValues.add(listObj);
-                    _collector.emit("listObj", tuple, emitValues);
+                    _collector.emit("list", tuple, emitValues);
                 } else {
                     _collector.emit("ErrorStream", new Values(parser.validateList(listObj)));
                 }
                 break;
-            case "listObj-state":
+            case "list-state":
                 break;
         }
         _collector.ack(tuple);

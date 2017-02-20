@@ -180,19 +180,11 @@ public class LookupHandler {
     public static ArrayList<Integer> lookUpDateTime(String timeStr) throws SQLException, ClassNotFoundException {
         ArrayList<Integer> toReturn = new ArrayList<>();
 
+        // todo: just .length? instead of looking for Z/+/-
         if (timeStr.contains("T")) {
             toReturn.add(LookupHandler.lookupId("date_d", "full_date",
                     timeStr.substring(0, timeStr.indexOf("T"))));
-            log.info(timeStr);
-            String time = null;
-            // todo: just .length? instead of looking for Z/+/-
-            time = timeStr.substring(timeStr.indexOf("T")).split(":")[0] + ":00:00";
-//            if (timeStr.contains("Z"))
-//                time = timeStr.substring(timeStr.indexOf("T"), timeStr.indexOf("Z")).split(":")[0] + ":00:00";
-//            else if (timeStr.contains("+"))
-//                time = timeStr.substring(timeStr.indexOf("T"), timeStr.indexOf("+")).split(":")[0] + ":00:00";
-//            else
-
+            String time = timeStr.substring(timeStr.indexOf("T") + 1).split(":")[0] + ":00:00";
             toReturn.add(LookupHandler.lookupId("time_d", "time_str", time));
         } else {
             String[] dateParts = timeStr.split(" ");

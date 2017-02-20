@@ -25,7 +25,6 @@ public class Transformer {
             Map<String, String> columns = new TreeMap<>();
             columns.put("class_display", "String");
             columns.put("subclass_display", "String");
-//            item.setItemClassDisplay(String.valueOf(LookupHandler.lookupId("inv_item_class_type_d", "class_display", item.getItemClass())));
             List<Object> returned = LookupHandler.customLookUp("select class_display, subclass_display from inv_item_class_type_d where class = '" + item.getItemClass() + "'" +
                     " AND subclass = '" + item.getItemSubClass() + "'", columns);
             if (!returned.isEmpty()) {
@@ -35,24 +34,22 @@ public class Transformer {
                 item.setItemClassDisplay("Unknown");
                 item.setItemSubClassDisplay("Unknown");
             }
-//            item.setItemSubClassDisplay(String.valueOf(LookupHandler.lookupId("inv_item_class_type_d", "subclass_display", item.getItemSubClass())));
             item.setClientId(LookupHandler.lookupId("clients_d", "client_code", item.getClient()));
             item.setScheduleId(LookupHandler.getScheduleId(item.getRouteType(), item.getRouteRef()));
 
-            columns.clear();
-            columns.put("class_display", "String");
-            List<Object> statusDisplay = LookupHandler.customLookUp("SELECT class_display FROM inv_item_status_type_d WHERE class = '" + item.getStatus().value + "'", columns);
-            if (!statusDisplay.isEmpty())
-                item.getStatusDisplay().value = (String) statusDisplay.get(0);
-            else {
-                String status = item.getStatusDisplay().value;
+            String status = item.getStatus().value;
+            item.getStatusDisplay().value = LookupHandler.lookupColumn("inv_item_status_type_d", "class_display", "class", status);
+            if (item.getStatusDisplay().value.equalsIgnoreCase("unknown") && status.length() > 0) {
                 String[] tempStatus = status.split("_");
-                if (tempStatus.length > 0) {
+                if (tempStatus.length > 1) {
                     for (int i = 0; i < tempStatus.length; i++) {
-                        tempStatus[i] = tempStatus[i] + tempStatus[i].substring(1).toLowerCase();
+                        tempStatus[i] = tempStatus[i].substring(0, 1) + tempStatus[i].substring(1).toLowerCase();
                     }
+                    status = tempStatus[0] + " " + tempStatus[1];
+                } else {
+                    status = (status.substring(0, 1) + status.substring(1).toLowerCase());
                 }
-                status = tempStatus[0] + " " + tempStatus[1];
+
                 item.getStatusDisplay().value = status;
             }
         } catch (ClassNotFoundException | SQLException e) {
@@ -242,7 +239,7 @@ public class Transformer {
 //        return output;
 //    }
 
-    String transformDate(String date) {
+    private String transformDate(String date) {
         System.out.println(date);
 
         if (date == null) return null;
@@ -253,14 +250,6 @@ public class Transformer {
             return date.replace("Z", "").replace("T", " ");
         else
             return null;
-
-
-        //            if (itemState.getStateDateTimeLocal().contains("+"))
-//                itemState.setStateDateTimeLocal(itemState.getStateDateTimeLocal().substring(0, itemState.getStateDateTimeLocal().lastIndexOf("+") - 1));
-//        }
-
-        //2017-02-14T17:22:16.078Z
-//        if (!itemState.getStateDateTimeLocal().contains("+") && !itemState.getStateDateTimeLocal().contains("Z"))
     }
 
     private String transformStatedDay(String day) {
@@ -294,7 +283,13 @@ public class Transformer {
     }
 
     private String transformStatedTime(String time) {
-        int iTime = Integer.parseInt(time);
+        int iTime;
+        try {
+            iTime = Integer.parseInt(time);
+        } catch (NumberFormatException nfe) {
+            log.debug(String.format("Invalid StatedTime [%s], returning null", time));
+            return null;
+        }
         return (iTime >= 0 && iTime < 12) ? "AM" : "PM";
     }
 }
