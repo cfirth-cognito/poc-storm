@@ -22,26 +22,55 @@ public class Transformer {
 
     Values transformItem(Item item) {
         try {
-
-            item.setItemClassDisplay(String.valueOf(LookupHandler.lookupId("inv_item_class_type_d", "class_display", item.getItemClass())));
-            item.setItemSubClassDisplay(String.valueOf(LookupHandler.lookupId("inv_item_class_type_d", "subclass_display", item.getItemSubClass())));
+            Map<String, String> columns = new TreeMap<>();
+            columns.put("class_display", "String");
+            columns.put("subclass_display", "String");
+//            item.setItemClassDisplay(String.valueOf(LookupHandler.lookupId("inv_item_class_type_d", "class_display", item.getItemClass())));
+            List<Object> returned = LookupHandler.customLookUp("select class_display, subclass_display from inv_item_class_type_d where class = '" + item.getItemClass() + "'" +
+                    " AND subclass = '" + item.getItemSubClass() + "'", columns);
+            if (!returned.isEmpty()) {
+                item.setItemClassDisplay((String) returned.get(0));
+                item.setItemSubClassDisplay((String) returned.get(1));
+            } else {
+                item.setItemClassDisplay("Unknown");
+                item.setItemSubClassDisplay("Unknown");
+            }
+//            item.setItemSubClassDisplay(String.valueOf(LookupHandler.lookupId("inv_item_class_type_d", "subclass_display", item.getItemSubClass())));
             item.setClientId(LookupHandler.lookupId("clients_d", "client_code", item.getClient()));
             item.setScheduleId(LookupHandler.getScheduleId(item.getRouteType(), item.getRouteRef()));
 
+            columns.clear();
+            columns.put("class_display", "String");
+            List<Object> statusDisplay = LookupHandler.customLookUp("SELECT class_display FROM inv_item_status_type_d WHERE class = '" + item.getStatus().value + "'", columns);
+            if (!statusDisplay.isEmpty())
+                item.getStatusDisplay().value = (String) statusDisplay.get(0);
+            else {
+                String status = item.getStatusDisplay().value;
+                String[] tempStatus = status.split("_");
+                if (tempStatus.length > 0) {
+                    for (int i = 0; i < tempStatus.length; i++) {
+                        tempStatus[i] = tempStatus[i] + tempStatus[i].substring(1).toLowerCase();
+                    }
+                }
+                status = tempStatus[0] + " " + tempStatus[1];
+                item.getStatusDisplay().value = status;
+            }
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
         }
 
-        item.setEventDate(item.getEventDate().replace("Z", "").replace("T", " "));
+        item.setStatedDay(transformStatedDay(item.getStatedDay()));
+        item.setStatedTime(transformStatedTime(item.getStatedTime()));
+        item.setEventDate(transformDate(item.getEventDate()));
 
         Values output = new Values();
         output.add(item.getReference());
         output.add(item.getItemClass());
         output.add(item.getItemSubClass());
-        output.add(item.getStatus());
+        output.add(item.getStatus().value);
         output.add(item.getItemClassDisplay());
         output.add(item.getItemSubClassDisplay());
-        output.add(item.getStatus());
+        output.add(item.getStatusDisplay().value);
         output.add(item.getReference());
         output.add(item.getStatedDay());
         output.add(item.getStatedTime());
@@ -173,45 +202,45 @@ public class Transformer {
         return output;
     }
 
-    Values transformList(ListObj listObj) {
-        try {
-
-            listObj.getListClass().id = LookupHandler.lookupId("inv_list_class_type_d", Lists.asList("id", new String[]{"class_display", "subclass_display",
-                    "sort_order", "subclass"}), Lists.asList(listObj.getListClass().value, new String[]{}));
-            listObj.setItemSubClassDisplay(String.valueOf(LookupHandler.lookupId("inv_item_class_type_d", "subclass_display", listObj.getItemSubClass())));
-            listObj.setClientId(LookupHandler.lookupId("clients_d", "client_code", listObj.getClient()));
-            listObj.setScheduleId(LookupHandler.getScheduleId(listObj.getRouteType(), listObj.getRouteRef()));
-
-        } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
-        }
-
-        listObj.setEventDate(listObj.getEventDate().replace("Z", "").replace("T", " "));
-
-        Values output = new Values();
-        output.add(listObj.getReference());
-        output.add(listObj.getItemClass());
-        output.add(listObj.getItemSubClass());
-        output.add(listObj.getStatus());
-        output.add(listObj.getItemClassDisplay());
-        output.add(listObj.getItemSubClassDisplay());
-        output.add(listObj.getStatus());
-        output.add(listObj.getReference());
-        output.add(listObj.getStatedDay());
-        output.add(listObj.getStatedTime());
-        output.add(listObj.getClient());
-        output.add(listObj.getCustomerName());
-        output.add(listObj.getCustAddr());
-        output.add(1);
-        output.add(listObj.getEventDate());
-        output.add(listObj.getScheduleId());
-        output.add(listObj.getPostcode());
-        output.add(listObj.getClientId());
-        output.add(listObj.getRouteType());
-
-        // return item as listObj of fields
-        return output;
-    }
+//    Values transformList(ListObj listObj) {
+//        try {
+//
+//            listObj.getListClass().id = LookupHandler.lookupId("inv_list_class_type_d", Lists.asList("id", new String[]{"class_display", "subclass_display",
+//                    "sort_order", "subclass"}), Lists.asList(listObj.getListClass().value, new String[]{}));
+//            listObj.setItemSubClassDisplay(String.valueOf(LookupHandler.lookupId("inv_item_class_type_d", "subclass_display", listObj.getItemSubClass())));
+//            listObj.setClientId(LookupHandler.lookupId("clients_d", "client_code", listObj.getClient()));
+//            listObj.setScheduleId(LookupHandler.getScheduleId(listObj.getRouteType(), listObj.getRouteRef()));
+//
+//        } catch (ClassNotFoundException | SQLException e) {
+//            e.printStackTrace();
+//        }
+//
+//        listObj.setEventDate(listObj.getEventDate().replace("Z", "").replace("T", " "));
+//
+//        Values output = new Values();
+//        output.add(listObj.getReference());
+//        output.add(listObj.getItemClass());
+//        output.add(listObj.getItemSubClass());
+//        output.add(listObj.getStatus());
+//        output.add(listObj.getItemClassDisplay());
+//        output.add(listObj.getItemSubClassDisplay());
+//        output.add(listObj.getStatus());
+//        output.add(listObj.getReference());
+//        output.add(listObj.getStatedDay());
+//        output.add(listObj.getStatedTime());
+//        output.add(listObj.getClient());
+//        output.add(listObj.getCustomerName());
+//        output.add(listObj.getCustAddr());
+//        output.add(1);
+//        output.add(listObj.getEventDate());
+//        output.add(listObj.getScheduleId());
+//        output.add(listObj.getPostcode());
+//        output.add(listObj.getClientId());
+//        output.add(listObj.getRouteType());
+//
+//        // return item as listObj of fields
+//        return output;
+//    }
 
     String transformDate(String date) {
         System.out.println(date);
@@ -232,5 +261,40 @@ public class Transformer {
 
         //2017-02-14T17:22:16.078Z
 //        if (!itemState.getStateDateTimeLocal().contains("+") && !itemState.getStateDateTimeLocal().contains("Z"))
+    }
+
+    private String transformStatedDay(String day) {
+        String statedDay;
+        switch (day) {
+            case "1":
+                statedDay = "MON";
+                break;
+            case "2":
+                statedDay = "TUE";
+                break;
+            case "3":
+                statedDay = "WED";
+                break;
+            case "4":
+                statedDay = "THU";
+                break;
+            case "5":
+                statedDay = "FRI";
+                break;
+            case "6":
+                statedDay = "SAT";
+                break;
+            case "7":
+                statedDay = "SUN";
+                break;
+            default:
+                statedDay = null;
+        }
+        return statedDay;
+    }
+
+    private String transformStatedTime(String time) {
+        int iTime = Integer.parseInt(time);
+        return (iTime >= 0 && iTime < 12) ? "AM" : "PM";
     }
 }

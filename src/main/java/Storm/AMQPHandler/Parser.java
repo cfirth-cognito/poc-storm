@@ -22,7 +22,7 @@ public class Parser {
         item.setItemClass(parseByPath(payload, "$.itemMetadata.class"));
         item.setItemSubClass(parseByPath(payload, "$.itemMetadata.subClass"));
         item.setCustomerName(parseByPath(payload, "$.contactDetails.name"));
-        item.setStatus("test");
+        item.getStatus().value = parseByPath(payload, "$.status.code");
         item.setClient(parseByPath(payload, "$.itemMetadata.parameters.ClientId"));
         item.setStatedDay(parseByPath(payload, "$.itemMetadata.parameters.StatedDay"));
         item.setStatedTime(parseByPath(payload, "$.itemMetadata.parameters.StatedTime"));
@@ -135,19 +135,19 @@ public class Parser {
     }
 
     String validateList(ListObj listObj) {
-        if(listObj.getReference() == null)
+        if (listObj.getReference() == null)
             return "Reference failed validation";
-        if(listObj.getBeginDate().value == null)
+        if (listObj.getBeginDate().value == null)
             return "BeginDate failed validation";
-        if(listObj.getListClass().value == null)
+        if (listObj.getListClass().value == null)
             return "ListObj Class failed validation";
-        if(listObj.getType().value == null)
+        if (listObj.getType().value == null)
             return "ListObj Type failed validation";
-        if(listObj.getRouteType().value == null)
+        if (listObj.getRouteType().value == null)
             return "Route Type failed validation";
-        if(listObj.getEventDate() == null)
+        if (listObj.getEventDate() == null)
             return "Event Date failed validation";
-        if(listObj.getSchedueleRef().value == null)
+        if (listObj.getSchedueleRef().value == null)
             return "Route Ref failed validation";
 
         return null;

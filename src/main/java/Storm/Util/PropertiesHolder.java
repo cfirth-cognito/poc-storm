@@ -40,7 +40,7 @@ public class PropertiesHolder {
 
             itemQueue = getValue("rabbit.queue.item");
             itemStateQueue = getValue("rabbit.queue.item_state");
-            itemStateQueue = getValue("rabbit.queue.list");
+//            itemStateQueue = getValue("rabbit.queue.list");
 
             databaseHost = getValue("database.host");
             databasePort = Integer.parseInt(getValue("database.port"));

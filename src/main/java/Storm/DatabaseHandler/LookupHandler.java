@@ -77,6 +77,31 @@ public class LookupHandler {
         return 1; // Unknown
     }
 
+    public static String lookupColumn(String table, String column, String wColumn, String value) throws SQLException, ClassNotFoundException {
+        String idLookupStatement = "SELECT " + column + " FROM (tbl) WHERE (col) = ?";
+        Class.forName("com.mysql.jdbc.Driver");
+        if (connection == null || connection.isClosed() || !connection.isValid(5))
+            connection = DriverManager.getConnection(url, user, pass);
+
+        idLookupStatement = idLookupStatement.replace("(tbl)", table).replace("(col)", wColumn);
+        try {
+            stmt = connection.prepareStatement(idLookupStatement);
+
+            log.debug(String.format("Looking up from %s, column %s, wColumn %s, value %s", table, column, wColumn, value));
+            stmt.setString(1, value);
+
+            ResultSet resultSet = stmt.executeQuery();
+
+            if (resultSet.next()) {
+                return resultSet.getString(1);
+            }
+        } catch (SQLException | NullPointerException e) {
+            log.debug(String.format("Caught Exception %s looking up id in table %s, column %s, value %s. Returning 1.",
+                    e.getMessage(), table, column, value));
+        }
+        return "Unknown"; // Unknown
+    }
+
     /**
      * Lookup from a dimension, return specified columns
      *

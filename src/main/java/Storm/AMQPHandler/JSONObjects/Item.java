@@ -1,17 +1,21 @@
 package Storm.AMQPHandler.JSONObjects;
 
+import Storm.Util.Field;
+
 /**
  * Created by Charlie on 28/01/2017.
  */
 public class Item {
 
     private String reference;
+    private String barcode;
     private String itemClass;
     private String itemSubClass;
     private String itemClassDisplay;
     private String itemSubClassDisplay;
     private String customerName;
-    private String status;
+    private Field status = new Field();
+    private Field statusDisplay = new Field();
     private String client;
     private String statedDay;
     private String statedTime;
@@ -27,6 +31,23 @@ public class Item {
     private int clientId;
 
     public Item() {
+    }
+
+
+    public Field getStatusDisplay() {
+        return statusDisplay;
+    }
+
+    public void setStatusDisplay(Field statusDisplay) {
+        this.statusDisplay = statusDisplay;
+    }
+
+    public String getBarcode() {
+        return barcode;
+    }
+
+    public void setBarcode(String barcode) {
+        this.barcode = barcode;
     }
 
     public int getClientId() {
@@ -85,11 +106,11 @@ public class Item {
         this.customerName = customerName;
     }
 
-    public String getStatus() {
+    public Field getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Field status) {
         this.status = status;
     }
 
