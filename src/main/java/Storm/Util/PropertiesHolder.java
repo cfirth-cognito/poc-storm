@@ -56,7 +56,7 @@ public class PropertiesHolder {
         }
     }
 
-    public static String getValue(String name) {
+    static String getValue(String name) {
         return properties.getProperty(name);
     }
 }
