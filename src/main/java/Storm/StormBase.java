@@ -10,6 +10,7 @@ import Storm.Transformers.ItemStateTransformBolt;
 import Storm.Transformers.ItemTransformBolt;
 import Storm.ErrorHandler.ErrorBolt;
 import Storm.Util.PropertiesHolder;
+import Storm.Util.SequencingBolt;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.StormSubmitter;
 import org.apache.storm.generated.AlreadyAliveException;
@@ -46,6 +47,8 @@ public class StormBase {
     private static ItemStateTransformBolt itemStateTransformBolt;
     private static JdbcMapper itemStateJdbcMapper;
     private static InsertBoltImpl itemStatePersistenceBolt;
+
+    private static SequencingBolt sequencingBolt;
 
     /* ListObj Topology */
 //    private static AMQPSpout listAMQPSpout;
@@ -113,6 +116,9 @@ public class StormBase {
                 .shuffleGrouping("parse_amqp_bolt", "item");
         builder.setBolt("persist_bolt", itemPersistenceBolt)
                 .shuffleGrouping("item_transform_bolt", "item");
+        builder.setBolt("sequencing_bolt", sequencingBolt)
+                .shuffleGrouping("persist_bolt", "item")
+                .shuffleGrouping("parse_amqp_bolt", "item-state");
 
         return builder;
     }
@@ -125,7 +131,7 @@ public class StormBase {
         builder.setSpout("ItemStateAMQPSpout", itemStateAMQPSpout);
         builder.setBolt("item_state_transform_bolt", itemStateTransformBolt)
                 .shuffleGrouping("persist_bolt", "item") // Item Created State
-                .shuffleGrouping("parse_amqp_bolt", "item-state");
+                .shuffleGrouping("sequencing_bolt", "item-state");
         builder.setBolt("item_state_persistence_bolt", itemStatePersistenceBolt)
                 .shuffleGrouping("item_state_transform_bolt", "item-state");
         return builder;
@@ -162,6 +168,7 @@ public class StormBase {
     }
 
     private static void defineTasks() {
+        sequencingBolt = new SequencingBolt();
         itemAMQPSpout = new AMQPSpout(PropertiesHolder.rabbitHost, PropertiesHolder.rabbitPort, PropertiesHolder.rabbitVHost,
                 PropertiesHolder.rabbitUser, PropertiesHolder.rabbitPass, PropertiesHolder.itemQueue, "item");
         itemTransformBolt = new ItemTransformBolt();
