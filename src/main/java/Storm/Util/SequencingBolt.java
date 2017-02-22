@@ -1,6 +1,7 @@
 package Storm.Util;
 
 import Storm.AMQPHandler.JSONObjects.ItemState;
+import Storm.AMQPHandler.Parser;
 import Storm.DatabaseHandler.LookupHandler;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ResultSet;
@@ -13,6 +14,8 @@ import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +24,7 @@ import java.util.Map;
  * Created by Charlie on 21/02/2017.
  */
 public class SequencingBolt implements IRichBolt {
+    private static final Logger log = LoggerFactory.getLogger(SequencingBolt.class);
 
     TopologyContext context;
     OutputCollector _collector;
@@ -54,10 +58,12 @@ public class SequencingBolt implements IRichBolt {
 
                 query = String.format("SELECT * FROM cqrs.event where aggregateid = '%s' and aggregatetype = 'item';",
                         item.getStringByField("inv_item_ref"));
+                log.info("Checking for Item States for: " + item.getStringByField("inv_item_ref"));
                 resultSet = session.execute(query);
-
                 for (Row state : resultSet) {
-                    if (state.getString("eventname").equalsIgnoreCase("transitioned"))
+                    String eventName = state.getString("eventname");
+                    log.info("Processing result with event name of " + eventName);
+                    if (eventName.equalsIgnoreCase("transitioned"))
                         _collector.emit("item-state", tuple, new Values(state.getMap("parameters", String.class, String.class).get("state")));
                 }
 
@@ -66,6 +72,8 @@ public class SequencingBolt implements IRichBolt {
                 /* Check for Item */
                 ItemState itemState = (ItemState) tuple.getValueByField("item-state");
 
+                log.info("Checking for existing item before processing Item State");
+
                 query = String.format("SELECT * FROM cqrs.event where aggregateid = '%s' and aggregatetype = 'item';",
                         itemState.getReference());
                 resultSet = session.execute(query);
@@ -73,6 +81,7 @@ public class SequencingBolt implements IRichBolt {
                 boolean found = false;
                 for (Row state : resultSet) {
                     if (state.getString("eventname").equalsIgnoreCase("created")) {
+                        log.info("Found item. Continuing Item State stream.");
                         _collector.emit("item-state", tuple, new Values(itemState));
                         found = true;
                         break;
