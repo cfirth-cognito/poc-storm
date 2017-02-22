@@ -38,7 +38,7 @@ public class SequencingBolt implements IRichBolt {
     @Override
     public void execute(Tuple tuple) {
         Cluster cassandraCluster = Cluster.builder()
-                .addContactPoints(PropertiesHolder.getValue("cassandra_urls").split(","))
+                .addContactPoints(PropertiesHolder.getValue("cassandra.urls").split(","))
                 .withClusterName("foo")
                 .withPort(9042)
                 .withCredentials("guest", "guest")
