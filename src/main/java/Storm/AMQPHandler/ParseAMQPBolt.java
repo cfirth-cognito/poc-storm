@@ -35,7 +35,7 @@ public class ParseAMQPBolt implements IRichBolt {
     public void execute(Tuple tuple) {
         Parser parser = new Parser();
         Values emitValues = new Values();
-        String msgBody = tuple.getStringByField("body");
+        String msgBody = tuple.getString(0);
         int index = msgBody.indexOf("extensionsXml");
         msgBody = msgBody.replaceAll("\\n \"extensionsXml.*,", "");
 

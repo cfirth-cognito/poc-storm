@@ -173,8 +173,12 @@ public class Parser {
 
     private String parseByPath(String msg, String path, String defaultString) {
         try {
-            return ((String) JsonPath.parse(msg).read(path)).isEmpty() ? defaultString : (String) JsonPath.parse(msg).read(path);
-        } catch (PathNotFoundException e) {
+            String parsed = JsonPath.parse(msg).read(path);
+            if (parsed == null || parsed.isEmpty())
+                return defaultString;
+            else
+                return parsed;
+        } catch (PathNotFoundException | NullPointerException e) {
             if (e.getMessage().contains("'null")) { // Null value in JSON - valid, handle properly
                 log.debug("Gracefully handling a null json value in message");
                 return null;
