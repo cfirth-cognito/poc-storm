@@ -43,7 +43,13 @@ public class Parser {
     ItemState parseItemState(String msg) {
 
         ItemState itemState = new ItemState();
-        String payload = JsonPath.parse(msg).read("$.payload");
+        String payload;
+        try {
+            payload = JsonPath.parse(msg).read("$.payload");
+        } catch (PathNotFoundException pfe) {
+            log.warn("Payload path not found. Using message body.");
+            payload = msg;
+        }
 
         itemState.setReference(parseByPath(payload, "$.transitionMetaDataView.invItemReference"));
         itemState.setMessageRef(parseByPath(payload, "$.transitionMetaDataView.reference"));

@@ -82,7 +82,7 @@ public class SequencingBolt implements IRichBolt {
                 for (Row state : resultSet) {
                     if (state.getString("eventname").equalsIgnoreCase("created")) {
                         log.info("Found item. Continuing Item State stream.");
-                        _collector.emit("item-state", tuple, new Values(itemState));
+                        _collector.emit("item-state-cont", tuple, new Values(itemState));
                         found = true;
                         break;
                     }
@@ -104,6 +104,7 @@ public class SequencingBolt implements IRichBolt {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declareStream("item-state", new Fields("item-state"));
+        outputFieldsDeclarer.declareStream("item-state-cont", new Fields("item-state"));
     }
 
     @Override
