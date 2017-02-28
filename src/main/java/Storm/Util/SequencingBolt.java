@@ -29,10 +29,23 @@ public class SequencingBolt implements IRichBolt {
     TopologyContext context;
     OutputCollector _collector;
 
+    private Session session;
+
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
         this.context = topologyContext;
         this._collector = outputCollector;
+    }
+
+    private void getSession() {
+        Cluster cassandraCluster = Cluster.builder()
+                .addContactPoints(PropertiesHolder.getValue("cassandra.urls").split(","))
+                .withClusterName("foo")
+                .withPort(9042)
+                .withCredentials("guest", "guest")
+                .build();
+        if (session == null || session.isClosed())
+            session = cassandraCluster.connect();
     }
 
     /*
@@ -41,13 +54,7 @@ public class SequencingBolt implements IRichBolt {
      */
     @Override
     public void execute(Tuple tuple) {
-        Cluster cassandraCluster = Cluster.builder()
-                .addContactPoints(PropertiesHolder.getValue("cassandra.urls").split(","))
-                .withClusterName("foo")
-                .withPort(9042)
-                .withCredentials("guest", "guest")
-                .build();
-        Session session = cassandraCluster.connect();
+        getSession();
         String query;
         ResultSet resultSet;
 
@@ -101,7 +108,7 @@ public class SequencingBolt implements IRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declareStream("item-state", new Fields("item-state"));
+        outputFieldsDeclarer.declareStream(Streams.ITEM_STATE.id(), new Fields("item-state"));
         outputFieldsDeclarer.declareStream("item-state-cont", new Fields("item-state"));
     }
 
