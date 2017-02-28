@@ -3,6 +3,7 @@ package Storm.AMQPHandler;
 import Storm.AMQPHandler.JSONObjects.Item;
 import Storm.AMQPHandler.JSONObjects.ItemState;
 import Storm.AMQPHandler.JSONObjects.ListObj;
+import Storm.Util.Streams;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
@@ -46,18 +47,18 @@ public class ParseAMQPBolt implements IRichBolt {
                 Item item = parser.parseItem(msgBody);
                 if (parser.validateItem(item) == null) {
                     emitValues.add(item);
-                    _collector.emit("item", tuple, emitValues);
+                    _collector.emit(Streams.ITEM.id(), tuple, emitValues);
                 } else {
-                    _collector.emit("ErrorStream", new Values(parser.validateItem(item)));
+                    _collector.emit(Streams.ERROR.id(), new Values(parser.validateItem(item)));
                 }
                 break;
             case "item-state":
                 ItemState itemState = parser.parseItemState(msgBody);
                 if (parser.validateItemState(itemState) == null) {
                     emitValues.add(itemState);
-                    _collector.emit("item-state", tuple, emitValues);
+                    _collector.emit(Streams.ITEM_STATE.id(), tuple, emitValues);
                 } else {
-                    _collector.emit("ErrorStream", new Values(parser.validateItemState(itemState)));
+                    _collector.emit(Streams.ERROR.id(), new Values(parser.validateItemState(itemState)));
                 }
                 break;
             case "list":
@@ -66,7 +67,7 @@ public class ParseAMQPBolt implements IRichBolt {
                     emitValues.add(listObj);
                     _collector.emit("list", tuple, emitValues);
                 } else {
-                    _collector.emit("ErrorStream", new Values(parser.validateList(listObj)));
+                    _collector.emit(Streams.ERROR.id(), new Values(parser.validateList(listObj)));
                 }
                 break;
             case "list-state":
@@ -81,10 +82,10 @@ public class ParseAMQPBolt implements IRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declareStream("item", new Fields("item"));
-        outputFieldsDeclarer.declareStream("item-state", new Fields("item-state"));
+        outputFieldsDeclarer.declareStream(Streams.ITEM.id(), new Fields("item"));
+        outputFieldsDeclarer.declareStream(Streams.ITEM_STATE.id(), new Fields("item-state"));
         outputFieldsDeclarer.declareStream("list", new Fields("list"));
-        outputFieldsDeclarer.declareStream("ErrorStream", new Fields("error_msg"));
+        outputFieldsDeclarer.declareStream(Streams.ERROR.id(), new Fields("error_msg"));
     }
 
     @Override

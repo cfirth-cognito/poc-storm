@@ -90,10 +90,8 @@ public class SequencingBolt implements IRichBolt {
 
                 if (!found)
                     _collector.ack(tuple); // No item yet. Don't go any further, and remove the state from Rabbit
-
                 break;
         }
-
     }
 
     @Override

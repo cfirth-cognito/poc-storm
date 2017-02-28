@@ -11,6 +11,7 @@ import Storm.Transformers.ItemTransformBolt;
 import Storm.ErrorHandler.ErrorBolt;
 import Storm.Util.PropertiesHolder;
 import Storm.Util.SequencingBolt;
+import Storm.Util.Streams;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.StormSubmitter;
 import org.apache.storm.generated.AlreadyAliveException;
@@ -48,6 +49,19 @@ public class StormBase {
     private static JdbcMapper itemStateJdbcMapper;
     private static InsertBoltImpl itemStatePersistenceBolt;
 
+    /* Drop Topology */
+    private static AMQPSpout dropAMQPSpout;
+    private static ItemTransformBolt dropTransformBolt;
+    private static JdbcMapper dropJdbcMapper;
+    private static InsertBoltImpl dropPersistenceBolt;
+
+    /* Drop State Topology */
+    private static AMQPSpout dropStateAMQPSpout;
+    private static ItemStateTransformBolt dropStateTransformBolt;
+    private static JdbcMapper dropStateJdbcMapper;
+    private static InsertBoltImpl dropStatePersistenceBolt;
+
+
     private static SequencingBolt sequencingBolt;
 
     /* ListObj Topology */
@@ -73,15 +87,17 @@ public class StormBase {
 
         ParseAMQPBolt parseAMQPBolt = new ParseAMQPBolt();
         builder.setBolt("parse_amqp_bolt", parseAMQPBolt)
-                .shuffleGrouping("ItemAMQPSpout", "item")
-                .shuffleGrouping("ItemStateAMQPSpout", "item-state")
-                .shuffleGrouping("sequencing_bolt", "item-state");
+                .shuffleGrouping("ItemAMQPSpout", Streams.ITEM.id())
+                .shuffleGrouping("ItemStateAMQPSpout", Streams.ITEM_STATE.id())
+                .shuffleGrouping("sequencing_bolt", Streams.ITEM_STATE.id());
 
 //                .shuffleGrouping("ListAMQPSpout", "list");
 
         /* Build Topology */
 
         builder = buildItemTopology(builder);
+        builder = buildItemStateTopology(builder);
+        builder = buildItemStateTopology(builder);
         builder = buildItemStateTopology(builder);
         builder = buildErrorTopology(builder);
 
@@ -115,12 +131,12 @@ public class StormBase {
 
         builder.setSpout("ItemAMQPSpout", itemAMQPSpout);
         builder.setBolt("item_transform_bolt", itemTransformBolt)
-                .shuffleGrouping("parse_amqp_bolt", "item");
+                .shuffleGrouping("parse_amqp_bolt", Streams.ITEM.id());
         builder.setBolt("persist_bolt", itemPersistenceBolt)
-                .shuffleGrouping("item_transform_bolt", "item");
+                .shuffleGrouping("item_transform_bolt", Streams.ITEM.id());
         builder.setBolt("sequencing_bolt", sequencingBolt)
-                .shuffleGrouping("persist_bolt", "item")
-                .shuffleGrouping("parse_amqp_bolt", "item-state");
+                .shuffleGrouping("persist_bolt", Streams.ITEM.id())
+                .shuffleGrouping("parse_amqp_bolt", Streams.ITEM_STATE.id());
 
         return builder;
     }
@@ -132,10 +148,41 @@ public class StormBase {
 
         builder.setSpout("ItemStateAMQPSpout", itemStateAMQPSpout);
         builder.setBolt("item_state_transform_bolt", itemStateTransformBolt)
-                .shuffleGrouping("persist_bolt", "item") // Item Created State
+                .shuffleGrouping("persist_bolt", Streams.ITEM.id()) // Item Created State
                 .shuffleGrouping("sequencing_bolt", "item-state-cont");
         builder.setBolt("item_state_persistence_bolt", itemStatePersistenceBolt)
-                .shuffleGrouping("item_state_transform_bolt", "item-state");
+                .shuffleGrouping("item_state_transform_bolt", Streams.ITEM_STATE.id());
+        return builder;
+    }
+
+    private static TopologyBuilder buildDropTopology(TopologyBuilder builder) {
+        itemPersistenceBolt = new InsertBoltImpl(connectionProvider, itemJdbcMapper)
+                .withInsertQuery("insert into drop_d (" + Item.columnsToString() + ") values (" + Item.getPlaceholders() + ")")
+                .withQueryTimeoutSecs(30);
+
+        builder.setSpout("DropAMQPSpout", dropAMQPSpout);
+        builder.setBolt("drop_transform_bolt", dropTransformBolt)
+                .shuffleGrouping("parse_amqp_bolt", Streams.DROP.id());
+        builder.setBolt("persist_bolt", dropPersistenceBolt)
+                .shuffleGrouping("drop_transform_bolt", Streams.DROP.id());
+        builder.setBolt("sequencing_bolt", sequencingBolt)
+                .shuffleGrouping("persist_bolt", Streams.DROP.id())
+                .shuffleGrouping("parse_amqp_bolt", Streams.DROP_STATE.id());
+
+        return builder;
+    }
+
+    private static TopologyBuilder buildDropStateTopology(TopologyBuilder builder) {
+        dropStatePersistenceBolt = new InsertBoltImpl(connectionProvider, itemStateJdbcMapper)
+                .withInsertQuery("insert into drop_state_f (" + ItemState.columnsToString() + ") values (" + ItemState.getPlaceholders() + ")")
+                .withQueryTimeoutSecs(30);
+
+        builder.setSpout("DropStateAMQPSpout", dropStateAMQPSpout);
+        builder.setBolt("drop_state_transform_bolt", dropStateTransformBolt)
+                .shuffleGrouping("persist_bolt", Streams.DROP.id()) // Item Created State
+                .shuffleGrouping("sequencing_bolt", "item-state-cont");
+        builder.setBolt("item_state_persistence_bolt", dropStatePersistenceBolt)
+                .shuffleGrouping("item_state_transform_bolt", Streams.DROP_STATE.id());
         return builder;
     }
 
@@ -172,12 +219,12 @@ public class StormBase {
     private static void defineTasks() {
         sequencingBolt = new SequencingBolt();
         itemAMQPSpout = new AMQPSpout(PropertiesHolder.rabbitHost, PropertiesHolder.rabbitPort, PropertiesHolder.rabbitVHost,
-                PropertiesHolder.rabbitUser, PropertiesHolder.rabbitPass, PropertiesHolder.itemQueue, "item");
+                PropertiesHolder.rabbitUser, PropertiesHolder.rabbitPass, PropertiesHolder.itemQueue, Streams.ITEM.id());
         itemTransformBolt = new ItemTransformBolt();
         itemJdbcMapper = new SimpleJdbcMapper(Item.getColumns());
 
         itemStateAMQPSpout = new AMQPSpout(PropertiesHolder.rabbitHost, PropertiesHolder.rabbitPort, PropertiesHolder.rabbitVHost,
-                PropertiesHolder.rabbitUser, PropertiesHolder.rabbitPass, PropertiesHolder.itemStateQueue, "item-state");
+                PropertiesHolder.rabbitUser, PropertiesHolder.rabbitPass, PropertiesHolder.itemStateQueue, Streams.ITEM_STATE.id());
         itemStateTransformBolt = new ItemStateTransformBolt();
         itemStateJdbcMapper = new SimpleJdbcMapper(ItemState.getColumns());
 

@@ -25,6 +25,8 @@ public class PropertiesHolder {
     public static String itemQueue;
     public static String itemStateQueue;
     public static String listQueue;
+    public static String dropQueue;
+    public static String dropStateQueue;
 
     public static String production;
 
@@ -40,6 +42,8 @@ public class PropertiesHolder {
 
             itemQueue = getValue("rabbit.queue.item");
             itemStateQueue = getValue("rabbit.queue.item_state");
+            dropQueue = getValue("rabbit.queue.drop");
+            dropStateQueue = getValue("rabbit.queue.drop_state");
 //            itemStateQueue = getValue("rabbit.queue.list");
 
             databaseHost = getValue("database.host");

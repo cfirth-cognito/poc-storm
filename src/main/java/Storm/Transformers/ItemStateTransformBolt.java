@@ -1,6 +1,7 @@
 package Storm.Transformers;
 
 import Storm.AMQPHandler.JSONObjects.ItemState;
+import Storm.Util.Streams;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
@@ -42,7 +43,7 @@ public class ItemStateTransformBolt implements IRichBolt {
         }
 
         emitValues = transformer.transformItemState(state);
-        _collector.emit("item-state", tuple, emitValues);
+        _collector.emit(Streams.ITEM_STATE.id(), tuple, emitValues);
         _collector.ack(tuple);
     }
 
@@ -80,8 +81,8 @@ public class ItemStateTransformBolt implements IRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declareStream("item-state", Storm.DatabaseHandler.DBObjects.ItemState.fields());
-        outputFieldsDeclarer.declareStream("ErrorStream", new Fields("error_msg"));
+        outputFieldsDeclarer.declareStream(Streams.ITEM_STATE.id(), Storm.DatabaseHandler.DBObjects.ItemState.fields());
+        outputFieldsDeclarer.declareStream(Streams.ERROR.id(), new Fields("error_msg"));
     }
 
     @Override

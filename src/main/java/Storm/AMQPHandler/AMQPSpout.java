@@ -1,5 +1,6 @@
 package Storm.AMQPHandler;
 
+import Storm.Util.Streams;
 import com.rabbitmq.client.*;
 import org.apache.storm.spout.SpoutOutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -167,8 +168,8 @@ public class AMQPSpout implements IRichSpout {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declareStream("item", new Fields("body"));
-        outputFieldsDeclarer.declareStream("item-state", new Fields("body"));
+        outputFieldsDeclarer.declareStream(Streams.ITEM.id(), new Fields("body"));
+        outputFieldsDeclarer.declareStream(Streams.ITEM_STATE.id(), new Fields("body"));
         outputFieldsDeclarer.declareStream("list", new Fields("body"));
     }
 
