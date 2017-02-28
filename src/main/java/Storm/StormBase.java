@@ -97,8 +97,8 @@ public class StormBase {
 
         builder = buildItemTopology(builder);
         builder = buildItemStateTopology(builder);
-        builder = buildItemStateTopology(builder);
-        builder = buildItemStateTopology(builder);
+        builder = buildDropTopology(builder);
+        builder = buildDropStateTopology(builder);
         builder = buildErrorTopology(builder);
 
         log.info("Topology configured. Creating now..");
@@ -180,9 +180,9 @@ public class StormBase {
         builder.setSpout("DropStateAMQPSpout", dropStateAMQPSpout);
         builder.setBolt("drop_state_transform_bolt", dropStateTransformBolt)
                 .shuffleGrouping("persist_bolt", Streams.DROP.id()) // Item Created State
-                .shuffleGrouping("sequencing_bolt", "item-state-cont");
-        builder.setBolt("item_state_persistence_bolt", dropStatePersistenceBolt)
-                .shuffleGrouping("item_state_transform_bolt", Streams.DROP_STATE.id());
+                .shuffleGrouping("sequencing_bolt", "drop-state-cont");
+        builder.setBolt("drop_state_persistence_bolt", dropStatePersistenceBolt)
+                .shuffleGrouping("drop_state_transform_bolt", Streams.DROP_STATE.id());
         return builder;
     }
 
@@ -207,11 +207,11 @@ public class StormBase {
     private static TopologyBuilder buildErrorTopology(TopologyBuilder builder) {
         ErrorBolt errorBolt = new ErrorBolt();
         builder.setBolt("error_bolt", errorBolt)
-                .shuffleGrouping("persist_bolt", "ErrorStream")
-                .shuffleGrouping("parse_amqp_bolt", "ErrorStream")
-                .shuffleGrouping("item_transform_bolt", "ErrorStream")
-                .shuffleGrouping("item_state_transform_bolt", "ErrorStream")
-                .shuffleGrouping("item_state_persistence_bolt", "ErrorStream");
+                .shuffleGrouping("persist_bolt", Streams.ERROR.id())
+                .shuffleGrouping("parse_amqp_bolt", Streams.ERROR.id())
+                .shuffleGrouping("item_transform_bolt", Streams.ERROR.id())
+                .shuffleGrouping("item_state_transform_bolt", Streams.ERROR.id())
+                .shuffleGrouping("item_state_persistence_bolt", Streams.ERROR.id());
 
         return builder;
     }

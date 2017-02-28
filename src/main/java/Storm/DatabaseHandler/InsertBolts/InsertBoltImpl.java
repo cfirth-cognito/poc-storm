@@ -84,16 +84,16 @@ public class InsertBoltImpl extends AbstractJdbcBolt {
             this.collector.ack(tuple);
         } catch (Exception exception) {
             if (exception.getCause() != null) {
-                this.collector.emit("ErrorStream", new Values(String.format("[%s] Exception while attempting to insert record: %s", tuple.getSourceStreamId(), exception.getCause().getMessage())));
+                this.collector.emit(Streams.ERROR.id(), new Values(String.format("[%s] Exception while attempting to insert record: %s", tuple.getSourceStreamId(), exception.getCause().getMessage())));
             } else {
-                this.collector.emit("ErrorStream", new Values(String.format("[%s] Exception while attempting to insert record: %s", tuple.getSourceStreamId(), exception.getMessage())));
+                this.collector.emit(Streams.ERROR.id(), new Values(String.format("[%s] Exception while attempting to insert record: %s", tuple.getSourceStreamId(), exception.getMessage())));
             }
         }
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declareStream("ErrorStream", new Fields("error_msg"));
+        outputFieldsDeclarer.declareStream(Streams.ERROR.id(), new Fields("error_msg"));
         outputFieldsDeclarer.declareStream(Streams.ITEM.id(), new Fields("id", "values"));
     }
 }
