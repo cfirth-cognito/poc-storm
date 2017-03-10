@@ -2,10 +2,12 @@ package Storm;
 
 import Storm.AMQPHandler.AMQPSpout;
 import Storm.AMQPHandler.ParseAMQPBolt;
+import Storm.DatabaseHandler.DBObjects.Drop;
 import Storm.DatabaseHandler.DBObjects.Item;
 import Storm.DatabaseHandler.DBObjects.ItemState;
 import Storm.DatabaseHandler.DBObjects.List;
 import Storm.DatabaseHandler.InsertBolts.InsertBoltImpl;
+import Storm.Transformers.DropTransformBolt;
 import Storm.Transformers.ItemStateTransformBolt;
 import Storm.Transformers.ItemTransformBolt;
 import Storm.ErrorHandler.ErrorBolt;
@@ -51,7 +53,7 @@ public class StormBase {
 
     /* Drop Topology */
     private static AMQPSpout dropAMQPSpout;
-    private static ItemTransformBolt dropTransformBolt;
+    private static DropTransformBolt dropTransformBolt;
     private static JdbcMapper dropJdbcMapper;
     private static InsertBoltImpl dropPersistenceBolt;
 
@@ -89,6 +91,7 @@ public class StormBase {
         builder.setBolt("parse_amqp_bolt", parseAMQPBolt)
                 .shuffleGrouping("ItemAMQPSpout", Streams.ITEM.id())
                 .shuffleGrouping("ItemStateAMQPSpout", Streams.ITEM_STATE.id())
+                .shuffleGrouping("DropAMQPSpout", Streams.DROP.id())
                 .shuffleGrouping("sequencing_bolt", Streams.ITEM_STATE.id());
 
 //                .shuffleGrouping("ListAMQPSpout", "list");
@@ -156,8 +159,8 @@ public class StormBase {
     }
 
     private static TopologyBuilder buildDropTopology(TopologyBuilder builder) {
-        itemPersistenceBolt = new InsertBoltImpl(connectionProvider, itemJdbcMapper)
-                .withInsertQuery("insert into drop_d (" + Item.columnsToString() + ") values (" + Item.getPlaceholders() + ")")
+        dropPersistenceBolt = new InsertBoltImpl(connectionProvider, dropJdbcMapper)
+                .withInsertQuery("insert into drop_d (" + Drop.columnsToString() + ") values (" + Drop.getPlaceholders() + ")")
                 .withQueryTimeoutSecs(30);
 
         builder.setSpout("DropAMQPSpout", dropAMQPSpout);

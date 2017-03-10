@@ -1,8 +1,6 @@
 package Storm.AMQPHandler;
 
-import Storm.AMQPHandler.JSONObjects.Item;
-import Storm.AMQPHandler.JSONObjects.ItemState;
-import Storm.AMQPHandler.JSONObjects.ListObj;
+import Storm.AMQPHandler.JSONObjects.*;
 import Storm.Util.Streams;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -49,7 +47,7 @@ public class ParseAMQPBolt implements IRichBolt {
                     emitValues.add(item);
                     _collector.emit(Streams.ITEM.id(), tuple, emitValues);
                 } else {
-                    _collector.emit(Streams.ERROR.id(), new Values(parser.validateItem(item)));
+                    _collector.emit(Streams.ERROR.id(), new Values("[ITEM]" + parser.validateItem(item)));
                 }
                 break;
             case "item-state":
@@ -58,7 +56,7 @@ public class ParseAMQPBolt implements IRichBolt {
                     emitValues.add(itemState);
                     _collector.emit(Streams.ITEM_STATE.id(), tuple, emitValues);
                 } else {
-                    _collector.emit(Streams.ERROR.id(), new Values(parser.validateItemState(itemState)));
+                    _collector.emit(Streams.ERROR.id(), new Values("[ITEM_STATE]" + parser.validateItemState(itemState)));
                 }
                 break;
             case "list":
@@ -67,11 +65,23 @@ public class ParseAMQPBolt implements IRichBolt {
                     emitValues.add(listObj);
                     _collector.emit("list", tuple, emitValues);
                 } else {
-                    _collector.emit(Streams.ERROR.id(), new Values(parser.validateList(listObj)));
+                    _collector.emit(Streams.ERROR.id(), new Values("[LIST]" + parser.validateList(listObj)));
                 }
                 break;
             case "list-state":
                 break;
+            case "drop":
+                Drop drop = parser.parseDrop(msgBody);
+                if (parser.validateDrop(drop) == null) {
+                    emitValues.add(drop);
+                    _collector.emit(Streams.DROP.id(), tuple, emitValues);
+                } else {
+                    _collector.emit(Streams.ERROR.id(), new Values("[DROP]" + parser.validateDrop(drop)));
+                }
+                break;
+            case "drop-state":
+                DropState dropState;
+                break;;
         }
         _collector.ack(tuple);
     }
@@ -84,7 +94,9 @@ public class ParseAMQPBolt implements IRichBolt {
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declareStream(Streams.ITEM.id(), new Fields("item"));
         outputFieldsDeclarer.declareStream(Streams.ITEM_STATE.id(), new Fields("item-state"));
+        outputFieldsDeclarer.declareStream(Streams.DROP.id(), new Fields("drop"));
         outputFieldsDeclarer.declareStream("list", new Fields("list"));
+
         outputFieldsDeclarer.declareStream(Streams.ERROR.id(), new Fields("error_msg"));
     }
 

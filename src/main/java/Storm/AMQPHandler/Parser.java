@@ -1,11 +1,10 @@
 package Storm.AMQPHandler;
 
-import Storm.AMQPHandler.JSONObjects.Item;
-import Storm.AMQPHandler.JSONObjects.ItemState;
-import Storm.AMQPHandler.JSONObjects.ListObj;
+import Storm.AMQPHandler.JSONObjects.*;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import net.minidev.json.JSONArray;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +92,57 @@ public class Parser {
         return listObj;
     }
 
+    Drop parseDrop(String msg) {
+        Drop drop = new Drop();
+
+        String payload = JsonPath.parse(msg).read("$.payload");
+
+        drop.setReference(parseByPath(payload, "$.itemMetadata.reference"));
+        drop.getDropClass().value = parseByPath(payload, "$.itemMetadata.class");
+        drop.getStatus().value = parseByPath(payload, "$.status.code");
+        drop.setEventDate(parseByPath(payload, "$.itemMetadata.eventDate"));
+        drop.setRouteType(parseByPath(payload, "$.routeType"));
+        drop.getShopId().value = parseByPath(payload, "$.parcelShopLocation.reference");
+        drop.getRoute().value = parseByPath(payload, "$.routeReference");
+
+        return drop;
+    }
+
+    DropState parseDropState(String msg) {
+        DropState dropState = new DropState();
+
+        String payload;
+        try {
+            payload = JsonPath.parse(msg).read("$.payload");
+        } catch (PathNotFoundException pfe) {
+            log.warn("Payload path not found. Using message body.");
+            payload = msg;
+        }
+
+        dropState.setReference(parseByPath(payload, "$.transitionMetaDataView.invItemReference"));
+        dropState.setEventDate(parseByPath(payload, "$.transitionMetaDataView.eventDate"));
+        dropState.setMessageRef(parseByPath(payload, "$.transitionMetaDataView.reference"));
+        dropState.getList().value = parseByPath(payload, "$.transitionMetaDataView.parameters.ManifestNum", "N/A");
+        dropState.getDropStateClass().value = parseByPath(payload, "$.transitionMetaDataView.class");
+        dropState.getDropStateSubClass().value = parseByPath(payload, "$.transitionMetaDataView.subClass", "N/A");
+        dropState.getResource().value = parseByPath(payload, "$.transitionMetaDataView.resourceReference");
+        dropState.getTrackingPoint().value = parseByPath(payload, "$.lineItems.[0].parameters.TrackingPoint");
+        dropState.getRouteType().value = parseByPath(payload, "$.routeType");
+        dropState.setBillingRef(parseByPath(payload, "$.transitionMetaDataView.parameters.BillingResRef"));
+        dropState.getShop().value = (parseByPath(payload, "$.networkNodeLocationView.reference"));
+        dropState.getRoute().value = parseByPath(payload, "$.routeReference");
+        dropState.setLat(parseByPath(payload, "$.transitionMetaDataView.geographicCoordinates.latitude"));
+        dropState.setLongitude(parseByPath(payload, "$.transitionMetaDataView.geographicCoordinates.longitude"));
+        dropState.setValidity(parseByPath(payload, "$.transitionMetaDataView.geographicCoordinates.validity"));
+        dropState.setDuration(parseByPath(payload, "$.transitionMetaDataView.parameters.Duration"));
+        dropState.setCustomerName(parseByPath(payload, "$.contactDetails.customerName"));
+        dropState.setDesignRank("$.transitionMetaDataView.parameters.DesignRank");
+        dropState.getOutcomeClass().value = (parseByPath(payload, "$.transitionMetaDataView.outcomeCode", "N/A"));
+        dropState.getOutcomeSubClass().value = parseByPath(payload, "$.transitionMetaDataView.outcomeText", "N/A");
+
+        return dropState;
+    }
+
 
     private ItemState replaceItemStateValues(ItemState itemState) {
         if (itemState.getEtaEndDate() != null && itemState.getEtaEndDate().isEmpty())
@@ -158,6 +208,48 @@ public class Parser {
             return "Event Date failed validation";
         if (listObj.getSchedueleRef().value == null)
             return "Route Ref failed validation";
+
+        return null;
+    }
+
+    String validateDrop(Drop drop) {
+        if (StringUtils.isEmpty(drop.getReference()))
+            return "Reference failed validation";
+        if (StringUtils.isEmpty(drop.getDropClass().value))
+            return "Class failed validation";
+        if (StringUtils.isEmpty(drop.getStatus().value))
+            return "Status failed validation";
+        if (StringUtils.isEmpty(drop.getEventDate()))
+            return "Event Date failed validation";
+        if (StringUtils.isEmpty(drop.getRouteType()))
+            return "Route Type failed validation";
+        if (StringUtils.isEmpty(drop.getShopId().value))
+            return "Shop ID failed validation";
+        if (StringUtils.isEmpty(drop.getRoute().value))
+            return "Route ID failed validation";
+
+        return null;
+    }
+
+    String validateDropState(DropState dropState) {
+        if (StringUtils.isEmpty(dropState.getReference()))
+            return "Reference failed validation";
+        if(StringUtils.isEmpty(dropState.getEventDate()))
+            return "Event Date failed validation";
+        if(StringUtils.isEmpty(dropState.getMessageRef()))
+            return "Message Reference failed validation";
+        if (StringUtils.isEmpty(dropState.getDropStateClass().value))
+            return "State Class failed validation";
+        if (StringUtils.isEmpty(dropState.getResource().value))
+            return "Status failed validation";
+        if (StringUtils.isEmpty(dropState.getEventDate()))
+            return "Event Date failed validation";
+//        if (StringUtils.isEmpty(dropState.getRouteType()))
+//            return "Route Type failed validation";
+//        if (StringUtils.isEmpty(dropState.getShopId().value))
+//            return "Shop ID failed validation";
+//        if (StringUtils.isEmpty(dropState.getRoute().value))
+//            return "Route ID failed validation";
 
         return null;
     }

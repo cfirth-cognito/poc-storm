@@ -1,5 +1,6 @@
 package Storm.Transformers;
 
+import Storm.AMQPHandler.JSONObjects.Drop;
 import Storm.AMQPHandler.JSONObjects.Item;
 import Storm.AMQPHandler.JSONObjects.ItemState;
 import Storm.AMQPHandler.JSONObjects.ListObj;
@@ -243,6 +244,46 @@ public class Transformer {
 //        // return item as listObj of fields
 //        return output;
 //    }
+
+    Values transformDrop(Drop drop) throws SQLException, ClassNotFoundException {
+
+        Map<String, String> columns = new TreeMap<>();
+        columns.put("class_display", "String");
+        columns.put("subclass_display", "String");
+        List<Object> returned = LookupHandler.customLookUp(
+                "select class_display, subclass, subclass_display from drop_class_type_d where class = '" + drop.getDropClass().value + "'", columns);
+        if (!returned.isEmpty()) {
+            drop.setDropClassDisplay((String) returned.get(0));
+            drop.getDropSubClass().value = (String) returned.get(1);
+            drop.setDropSubClassDisplay((String) returned.get(2));
+        } else {
+            drop.setDropClassDisplay("Unknown");
+            drop.getDropSubClass().value = "Unknown";
+            drop.setDropSubClassDisplay("Unknown");
+        }
+        drop.getRoute().id = LookupHandler.getScheduleId(drop.getRouteType(), drop.getShopId().value);
+        drop.getStatusDisplay().value = LookupHandler.lookupColumn("drop_status_type_d", "class_display", "class", drop.getStatus().value);
+
+        drop.setEventDate(transformDate(drop.getEventDate()));
+
+        Values output = new Values();
+        output.add(drop.getReference());
+        output.add(drop.getDropClass().value);
+        output.add(drop.getDropSubClass().value);
+        output.add(drop.getStatus().value);
+        output.add(drop.getDropClassDisplay());
+        output.add(drop.getDropSubClassDisplay());
+        output.add(drop.getStatusDisplay().value);
+        output.add(1);
+        output.add(drop.getEventDate());
+        output.add(drop.getRoute().id);
+        output.add(drop.getRouteType());
+        output.add(drop.getShopId().value);
+        output.add(drop.getRoute().value);
+
+        // return item as list of fields
+        return output;
+    }
 
     private String transformDate(String date) {
         System.out.println(date);
