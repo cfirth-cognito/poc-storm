@@ -1,6 +1,7 @@
-package Storm.Transformers;
+package Storm.Transform.Bolts;
 
-import Storm.AMQPHandler.JSONObjects.ItemState;
+import Storm.AMQPHandler.JSONObjects.DropState;
+import Storm.Transform.Bolts.Transformers.oldTransformer;
 import Storm.Util.Streams;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -17,8 +18,8 @@ import java.util.Map;
 /**
  * Created by charlie on 30/01/17.
  */
-public class ItemStateTransformBolt implements IRichBolt {
-    private static final Logger log = LoggerFactory.getLogger(ItemStateTransformBolt.class);
+public class DropStateTransformBolt implements IRichBolt {
+    private static final Logger log = LoggerFactory.getLogger(DropStateTransformBolt.class);
 
     TopologyContext context;
     OutputCollector _collector;
@@ -32,14 +33,14 @@ public class ItemStateTransformBolt implements IRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        Transformer transformer = new Transformer();
+        oldTransformer transformer = new oldTransformer();
         Values emitValues;
-        log.info(String.format("[LOG] ItemState Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
-        ItemState state;
+        log.info(String.format("[LOG] DropState Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
+        DropState state;
         if (tuple.getSourceStreamId().equalsIgnoreCase("item")) {
-            state = createItemStateCreatedObject(tuple);
+            state = createDropStateCreatedObject(tuple);
         } else {
-            state = (ItemState) tuple.getValueByField("item-state");
+            state = (DropState) tuple.getValueByField("drop-state");
         }
 
         emitValues = transformer.transformItemState(state);
@@ -47,8 +48,8 @@ public class ItemStateTransformBolt implements IRichBolt {
         _collector.ack(tuple);
     }
 
-    private ItemState createItemStateCreatedObject(Tuple tuple) {
-        ItemState state = new ItemState();
+    private DropState createDropStateCreatedObject(Tuple tuple) {
+        DropState state = new DropState();
         Tuple item = (Tuple) tuple.getValueByField("values");
 
         state.setItemId(tuple.getIntegerByField("id"));

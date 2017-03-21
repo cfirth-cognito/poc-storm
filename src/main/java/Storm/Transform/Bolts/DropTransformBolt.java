@@ -1,6 +1,8 @@
-package Storm.Transformers;
+package Storm.Transform.Bolts;
 
-import Storm.AMQPHandler.JSONObjects.Item;
+import Storm.AMQPHandler.JSONObjects.Drop;
+import Storm.Transform.DropTransformer;
+import Storm.Transform.Transformer;
 import Storm.Util.Streams;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -17,8 +19,8 @@ import java.util.Map;
 /**
  * Created by Charlie on 28/01/2017.
  */
-public class ItemTransformBolt implements IRichBolt {
-    private static final Logger log = LoggerFactory.getLogger(ItemTransformBolt.class);
+public class DropTransformBolt implements IRichBolt {
+    private static final Logger log = LoggerFactory.getLogger(DropTransformBolt.class);
 
     TopologyContext context;
     OutputCollector _collector;
@@ -32,15 +34,22 @@ public class ItemTransformBolt implements IRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        Transformer transformer = new Transformer();
+        Transformer<Drop> transformer = new DropTransformer<>();
         Values emitValues;
+        Drop drop = (Drop) tuple.getValueByField("drop");
+
         log.info(String.format("Transforming %s", tuple.getMessageId().toString()));
 
-        Item item = (Item) tuple.getValueByField("item");
-        emitValues = transformer.transformItem(item);
-
-        _collector.emit(Streams.ITEM.id(), tuple, emitValues);
-        _collector.ack(tuple);
+        try {
+            emitValues = transformer.transform(drop);
+            _collector.emit(Streams.DROP.id(), tuple, emitValues);
+            _collector.ack(tuple);
+        } catch (Exception e) {
+            if (e.getCause() != null)
+                _collector.emit(Streams.ERROR.id(), tuple, new Values(e.getCause().getMessage()));
+            else
+                _collector.emit(Streams.ERROR.id(), tuple, new Values(e.getMessage()));
+        }
     }
 
     @Override
@@ -49,7 +58,7 @@ public class ItemTransformBolt implements IRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declareStream(Streams.ITEM.id(), Storm.DatabaseHandler.DBObjects.Item.fields());
+        outputFieldsDeclarer.declareStream(Streams.DROP.id(), Storm.DatabaseHandler.DBObjects.Drop.fields());
         outputFieldsDeclarer.declareStream(Streams.ERROR.id(), new Fields("error_msg"));
 
     }
