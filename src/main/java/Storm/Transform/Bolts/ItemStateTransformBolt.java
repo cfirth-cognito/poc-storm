@@ -35,7 +35,7 @@ public class ItemStateTransformBolt implements IRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        Transformer<ItemState> transformer = new ItemStateTransformer<>();
+        Transformer<ItemState> transformer = new ItemStateTransformer();
         Values emitValues;
         ItemState state;
 

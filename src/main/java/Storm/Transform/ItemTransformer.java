@@ -12,11 +12,10 @@ import java.util.TreeMap;
 /**
  * Created by charlie on 21/03/17.
  */
-public class ItemTransformer<Obj> extends Transformer<Obj> {
+public class ItemTransformer extends Transformer<Item> {
 
     @Override
-    public Values transform(Obj obj) {
-        Item item = (Item) obj;
+    public Values transform(Item item) {
         try {
             Map<String, String> columns = new TreeMap<>();
             columns.put("class_display", "String");
@@ -80,8 +79,6 @@ public class ItemTransformer<Obj> extends Transformer<Obj> {
         // return item as list of fields
         return output;
     }
-
-
 
 
 }

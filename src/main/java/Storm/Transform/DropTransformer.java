@@ -12,15 +12,14 @@ import java.util.TreeMap;
 /**
  * Created by charlie on 21/03/17.
  */
-public class DropTransformer<Obj> extends Transformer<Obj> {
+public class DropTransformer extends Transformer<Drop> {
 
     @Override
-    Values transform(Obj obj) throws SQLException, ClassNotFoundException {
-        Drop drop = (Drop) obj;
-
+    public Values transform(Drop drop) throws SQLException, ClassNotFoundException {
         Map<String, String> columns = new TreeMap<>();
         columns.put("class_display", "String");
         columns.put("subclass_display", "String");
+
         List<Object> returned = LookupHandler.customLookUp(
                 "select class_display, subclass, subclass_display from drop_class_type_d where class = '" + drop.getDropClass().value + "'", columns);
         if (!returned.isEmpty()) {
@@ -32,6 +31,7 @@ public class DropTransformer<Obj> extends Transformer<Obj> {
             drop.getDropSubClass().value = "Unknown";
             drop.setDropSubClassDisplay("Unknown");
         }
+
         drop.getRoute().id = LookupHandler.getScheduleId(drop.getRouteType(), drop.getShopId().value);
         drop.getStatusDisplay().value = LookupHandler.lookupColumn("drop_status_type_d", "class_display", "class", drop.getStatus().value);
 

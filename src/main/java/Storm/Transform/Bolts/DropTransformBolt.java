@@ -34,7 +34,7 @@ public class DropTransformBolt implements IRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        Transformer<Drop> transformer = new DropTransformer<>();
+        Transformer<Drop> transformer = new DropTransformer();
         Values emitValues;
         Drop drop = (Drop) tuple.getValueByField("drop");
 

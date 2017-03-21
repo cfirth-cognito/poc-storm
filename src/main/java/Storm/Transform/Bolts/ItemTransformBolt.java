@@ -34,7 +34,7 @@ public class ItemTransformBolt implements IRichBolt {
     @Override
     public void execute(Tuple tuple) {
         Item item = (Item) tuple.getValueByField("item");
-        Transformer<Item> transformer = new ItemTransformer<>();
+        Transformer<Item> transformer = new ItemTransformer();
         Values emitValues;
 
         log.info(String.format("Transforming %s", tuple.getMessageId().toString()));

@@ -1,5 +1,6 @@
 package Storm.Transform;
 
+import Storm.AMQPHandler.JSONObjects.Item;
 import Storm.AMQPHandler.JSONObjects.ItemState;
 import Storm.DatabaseHandler.LookupHandler;
 import Storm.Transform.Transformer;
@@ -16,12 +17,11 @@ import java.util.TreeMap;
 /**
  * Created by charlie on 21/03/17.
  */
-public class ItemStateTransformer<Obj> extends Transformer<Obj> {
+public class ItemStateTransformer extends Transformer<ItemState> {
     private static final Logger log = LoggerFactory.getLogger(ItemStateTransformer.class);
 
     @Override
-    public Values transform(Obj obj) {
-        ItemState itemState = (ItemState) obj;
+    public Values transform(ItemState itemState) {
         try {
             log.info("Transforming ItemState. ItemID: " + itemState.getItemId());
             if (itemState.getItemId() == null) {
