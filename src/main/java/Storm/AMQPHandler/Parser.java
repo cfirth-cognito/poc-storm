@@ -234,22 +234,28 @@ public class Parser {
     String validateDropState(DropState dropState) {
         if (StringUtils.isEmpty(dropState.getReference()))
             return "Reference failed validation";
-        if(StringUtils.isEmpty(dropState.getEventDate()))
+        if (StringUtils.isEmpty(dropState.getEventDate()))
             return "Event Date failed validation";
-        if(StringUtils.isEmpty(dropState.getMessageRef()))
+        if (StringUtils.isEmpty(dropState.getMessageRef()))
             return "Message Reference failed validation";
         if (StringUtils.isEmpty(dropState.getDropStateClass().value))
             return "State Class failed validation";
         if (StringUtils.isEmpty(dropState.getResource().value))
             return "Status failed validation";
-        if (StringUtils.isEmpty(dropState.getEventDate()))
-            return "Event Date failed validation";
-//        if (StringUtils.isEmpty(dropState.getRouteType()))
-//            return "Route Type failed validation";
-//        if (StringUtils.isEmpty(dropState.getShopId().value))
-//            return "Shop ID failed validation";
-//        if (StringUtils.isEmpty(dropState.getRoute().value))
-//            return "Route ID failed validation";
+        if (StringUtils.isEmpty(dropState.getRouteType().value))
+            return "Route Type failed validation";
+        if (StringUtils.isEmpty(dropState.getBillingRef()))
+            return "Billing Ref failed validation";
+        if (StringUtils.isEmpty(dropState.getShop().value))
+            return "Shop ID failed validation";
+        if (StringUtils.isEmpty(dropState.getRoute().value))
+            return "Route ID failed validation";
+        if (StringUtils.isEmpty(dropState.getLat()))
+            return "Lat failed validation";
+        if (StringUtils.isEmpty(dropState.getLongitude()))
+            return "Long failed validation";
+        if (StringUtils.isEmpty(dropState.getValidity()))
+            return "Validity failed validation";
 
         return null;
     }

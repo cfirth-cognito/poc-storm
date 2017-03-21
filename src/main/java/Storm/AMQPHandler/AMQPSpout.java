@@ -1,5 +1,6 @@
 package Storm.AMQPHandler;
 
+import Storm.Util.PropertiesHolder;
 import Storm.Util.Streams;
 import com.rabbitmq.client.*;
 import org.apache.storm.spout.SpoutOutputCollector;
@@ -54,6 +55,16 @@ public class AMQPSpout implements IRichSpout {
         this.password = password;
         this.queue = queue;
         this.streamId = streamId;
+    }
+
+    public AMQPSpout(String queue, String streamId) {
+        this.host = PropertiesHolder.rabbitHost;
+        this.port = PropertiesHolder.rabbitPort;
+        this.vhost = PropertiesHolder.rabbitVHost;
+        this.username = PropertiesHolder.rabbitUser;
+        this.password = PropertiesHolder.rabbitPass;
+        this.streamId = streamId;
+        this.queue = queue;
     }
 
     @Override
