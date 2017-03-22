@@ -1,6 +1,7 @@
 package Storm.Transform.Bolts;
 
 import Storm.AMQPHandler.JSONObjects.DropState;
+import Storm.Transform.DropStateTransformer;
 import Storm.Transform.Transformer;
 import Storm.Util.Streams;
 import org.apache.storm.task.OutputCollector;
@@ -13,6 +14,7 @@ import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.SQLException;
 import java.util.Map;
 
 /**
@@ -33,48 +35,23 @@ public class DropStateTransformBolt implements IRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-//        Transformer<DropState> transformer = new Drop();
+        Transformer<DropState> transformer = new DropStateTransformer();
         Values emitValues;
         log.info(String.format("[LOG] DropState Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
         DropState state;
-        if (tuple.getSourceStreamId().equalsIgnoreCase("item")) {
-            state = createDropStateCreatedObject(tuple);
-        } else {
-            state = (DropState) tuple.getValueByField("drop-state");
+        state = (DropState) tuple.getValueByField("drop-state");
+
+        try {
+            emitValues = transformer.transform(state);
+            _collector.emit(Streams.DROP_STATE.id(), tuple, emitValues);
+        } catch (SQLException | ClassNotFoundException e) {
+            if (e.getCause() != null)
+                _collector.emit(Streams.ERROR.id(), tuple, new Values(e.getCause().getMessage()));
+            else
+                _collector.emit(Streams.ERROR.id(), tuple, new Values(e.getMessage()));
         }
-
-//        emitValues = transformer.transformItemState(state);
-//        _collector.emit(Streams.ITEM_STATE.id(), tuple, emitValues);
-//        _collector.ack(tuple);
     }
 
-    private DropState createDropStateCreatedObject(Tuple tuple) {
-        DropState state = new DropState();
-        Tuple item = (Tuple) tuple.getValueByField("values");
-
-//        state.setItemId(tuple.getIntegerByField("id"));
-//        state.setScheduleId(item.getIntegerByField("schedule_mgmt_id"));
-//        state.getItemClass().value = item.getStringByField("inv_item_class");
-//        state.getItemSubClass().value = item.getStringByField("inv_item_subclass");
-//        state.setReference(item.getStringByField("inv_item_ref"));
-//        state.setStateDateTimeLocal(item.getStringByField("event_date"));
-//        state.getItemStateClass().value = "CREATED";
-//        state.getManifested().value = "N/A";
-//        state.getItemStateSubClass().value = "N/A";
-//        state.getOutcomeClass().value = "N/A";
-//        state.getOutcomeSubClass().value = "N/A";
-//        state.setResourceId(1);
-//        state.setListId(1);
-//        state.setNetworkId(1);
-//        state.setGeographyId(1);
-//        state.setStateCounter(1);
-//        state.setBeginDateId(1);
-//        state.setListRef("N/A");
-//        state.setMessageRef("N/A");
-//        state.setAdditionalInfo("");
-//        state.setRouteType(item.getStringByField("route_type"));
-        return state;
-    }
 
     @Override
     public void cleanup() {

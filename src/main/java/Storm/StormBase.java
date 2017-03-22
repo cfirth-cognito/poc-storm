@@ -3,9 +3,11 @@ package Storm;
 import Storm.AMQPHandler.AMQPSpout;
 import Storm.AMQPHandler.ParseAMQPBolt;
 import Storm.DatabaseHandler.DBObjects.Drop;
+import Storm.DatabaseHandler.DBObjects.DropState;
 import Storm.DatabaseHandler.DBObjects.Item;
 import Storm.DatabaseHandler.DBObjects.ItemState;
 import Storm.DatabaseHandler.InsertBolts.InsertBoltImpl;
+import Storm.Transform.Bolts.DropStateTransformBolt;
 import Storm.Transform.Bolts.DropTransformBolt;
 import Storm.Transform.Bolts.ItemStateTransformBolt;
 import Storm.Transform.Bolts.ItemTransformBolt;
@@ -59,7 +61,7 @@ public class StormBase {
 
     /* Drop State Topology */
     private static AMQPSpout dropStateAMQPSpout;
-    private static ItemStateTransformBolt dropStateTransformBolt;
+    private static DropStateTransformBolt dropStateTransformBolt;
     private static JdbcMapper dropStateJdbcMapper;
     private static InsertBoltImpl dropStatePersistenceBolt;
 
@@ -177,12 +179,11 @@ public class StormBase {
 
     private static TopologyBuilder buildDropStateTopology(TopologyBuilder builder) {
         dropStatePersistenceBolt = new InsertBoltImpl(connectionProvider, itemStateJdbcMapper)
-                .withInsertQuery("insert into drop_state_f (" + ItemState.columnsToString() + ") values (" + ItemState.getPlaceholders() + ")")
+                .withInsertQuery("insert into drop_state_f (" + DropState.columnsToString() + ") values (" + DropState.getPlaceholders() + ")")
                 .withQueryTimeoutSecs(30);
 
         builder.setSpout(Topology.DROP_STATE_SPOUT.getId(), dropStateAMQPSpout);
         builder.setBolt(Topology.DROP_STATE_TRANSFORM_BOLT.getId(), dropStateTransformBolt)
-                .shuffleGrouping(Topology.ITEM_PERSIST_BOLT.getId(), Streams.DROP.id()) // Drop Created State
                 .shuffleGrouping(Topology.SEQUENCING_BOLT.getId(), "drop-state-cont");
         builder.setBolt("drop_state_persistence_bolt", dropStatePersistenceBolt)
                 .shuffleGrouping(Topology.DROP_STATE_TRANSFORM_BOLT.getId(), Streams.DROP_STATE.id());
@@ -236,8 +237,8 @@ public class StormBase {
         dropJdbcMapper = new SimpleJdbcMapper(Drop.getColumns());
 
         dropStateAMQPSpout = new AMQPSpout(PropertiesHolder.dropStateQueue, Streams.DROP_STATE.id());
-//        dropStateTransformBolt = new State
-//        dropStateJdbcMapper = new SimpleJdbcMapper(DropS)
+        dropStateTransformBolt = new DropStateTransformBolt();
+        dropStateJdbcMapper = new SimpleJdbcMapper(DropState.getColumns());
 
 
 //        listAMQPSpout = new AMQPSpout(PropertiesHolder.rabbitHost, PropertiesHolder.rabbitPort, PropertiesHolder.rabbitVHost,
