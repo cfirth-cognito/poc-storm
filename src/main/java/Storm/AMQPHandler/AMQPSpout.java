@@ -181,6 +181,8 @@ public class AMQPSpout implements IRichSpout {
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declareStream(Streams.ITEM.id(), new Fields("body"));
         outputFieldsDeclarer.declareStream(Streams.ITEM_STATE.id(), new Fields("body"));
+        outputFieldsDeclarer.declareStream(Streams.DROP.id(), new Fields("body"));
+        outputFieldsDeclarer.declareStream(Streams.DROP_STATE.id(), new Fields("body"));
         outputFieldsDeclarer.declareStream("list", new Fields("body"));
     }
 

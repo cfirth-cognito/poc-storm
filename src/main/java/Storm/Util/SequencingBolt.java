@@ -1,5 +1,6 @@
 package Storm.Util;
 
+import Storm.AMQPHandler.JSONObjects.DropState;
 import Storm.AMQPHandler.JSONObjects.ItemState;
 import Storm.AMQPHandler.Parser;
 import Storm.DatabaseHandler.LookupHandler;
@@ -54,49 +55,79 @@ public class SequencingBolt implements IRichBolt {
      */
     @Override
     public void execute(Tuple tuple) {
-        getSession();
+        if (PropertiesHolder.production.equalsIgnoreCase("true"))
+            getSession();
         String query;
         ResultSet resultSet;
 
         switch (tuple.getSourceStreamId()) {
             case "item":
+                if (PropertiesHolder.production.equalsIgnoreCase("true")) {
                 /* Goto Cassandra. Check for waiting item states. Emit the messages into the usual Item State transformation */
-                Tuple item = (Tuple) tuple.getValueByField("values");
+                    Tuple item = (Tuple) tuple.getValueByField("values");
 
-                query = String.format("SELECT * FROM cqrs.event where aggregateid = '%s' and aggregatetype = 'item';",
-                        item.getStringByField("inv_item_ref"));
-                log.info("Checking for Item States for: " + item.getStringByField("inv_item_ref"));
-                resultSet = session.execute(query);
-                for (Row state : resultSet) {
-                    String eventName = state.getString("eventname");
-                    log.info("Processing result with event name of " + eventName);
-                    if (eventName.equalsIgnoreCase("transitioned"))
-                        _collector.emit("item-state", tuple, new Values(state.getMap("parameters", String.class, String.class).get("state")));
+                    query = String.format("SELECT * FROM cqrs.event where aggregateid = '%s' and aggregatetype = 'item';",
+                            item.getStringByField("inv_item_ref"));
+                    log.info("Checking for Item States for: " + item.getStringByField("inv_item_ref"));
+                    resultSet = session.execute(query);
+                    for (Row state : resultSet) {
+                        String eventName = state.getString("eventname");
+                        log.info("Processing result with event name of " + eventName);
+                        if (eventName.equalsIgnoreCase("transitioned"))
+                            _collector.emit("item-state", tuple, new Values(state.getMap("parameters", String.class, String.class).get("state")));
+                    }
                 }
 
                 break;
             case "item-state":
-                /* Check for Item */
                 ItemState itemState = (ItemState) tuple.getValueByField("item-state");
+                if (PropertiesHolder.production.equalsIgnoreCase("true")) {
+                    /* Check for Item */
+                    log.info("Checking for existing item before processing Item State");
 
-                log.info("Checking for existing item before processing Item State");
+                    query = String.format("SELECT * FROM cqrs.event where aggregateid = '%s' and aggregatetype = 'item';",
+                            itemState.getReference());
+                    resultSet = session.execute(query);
 
-                query = String.format("SELECT * FROM cqrs.event where aggregateid = '%s' and aggregatetype = 'item';",
-                        itemState.getReference());
-                resultSet = session.execute(query);
-
-                boolean found = false;
-                for (Row state : resultSet) {
-                    if (state.getString("eventname").equalsIgnoreCase("created")) {
-                        log.info("Found item. Continuing Item State stream.");
-                        _collector.emit("item-state-cont", tuple, new Values(itemState));
-                        found = true;
-                        break;
+                    boolean found = false;
+                    for (Row state : resultSet) {
+                        if (state.getString("eventname").equalsIgnoreCase("created")) {
+                            log.info("Found item. Continuing Item State stream.");
+                            _collector.emit("item-state-cont", tuple, new Values(itemState));
+                            found = true;
+                            break;
+                        }
                     }
-                }
 
-                if (!found)
-                    _collector.ack(tuple); // No item yet. Don't go any further, and remove the state from Rabbit
+                    if (!found)
+                        _collector.ack(tuple); // No item yet. Don't go any further, and remove the state from Rabbit
+                } else
+                    _collector.emit("item-state-cont", tuple, new Values(itemState));
+                break;
+            case "drop-state":
+                DropState dropState = (DropState) tuple.getValueByField("drop-state");
+                if (PropertiesHolder.production.equalsIgnoreCase("true")) {
+                    /* Check for Drop */
+                    log.info("Checking for existing drop before processing Drop State");
+
+                    query = String.format("SELECT * FROM cqrs.event where aggregateid = '%s' and aggregatetype = 'item';",
+                            dropState.getReference());
+                    resultSet = session.execute(query);
+
+                    boolean found = false;
+                    for (Row state : resultSet) {
+                        if (state.getString("eventname").equalsIgnoreCase("created")) {
+                            log.info("Found drop. Continuing Drop State stream.");
+                            _collector.emit("drop-state-cont", tuple, new Values(dropState));
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found)
+                        _collector.ack(tuple);
+                } else
+                    _collector.emit("drop-state-cont", tuple, new Values(dropState));
                 break;
         }
     }
@@ -110,6 +141,7 @@ public class SequencingBolt implements IRichBolt {
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declareStream(Streams.ITEM_STATE.id(), new Fields("item-state"));
         outputFieldsDeclarer.declareStream("item-state-cont", new Fields("item-state"));
+        outputFieldsDeclarer.declareStream("drop-state-cont", new Fields("drop-state"));
     }
 
     @Override

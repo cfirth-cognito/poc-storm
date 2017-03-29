@@ -32,7 +32,7 @@ public class PropertiesHolder {
 
     static {
         try {
-            properties.load(PropertiesHolder.class.getClassLoader().getResourceAsStream("storm.properties"));
+            properties.load(PropertiesHolder.class.getClassLoader().getResourceAsStream("storm_local.properties"));
 
             rabbitHost = getValue("rabbit.host");
             rabbitPort = Integer.parseInt(getValue("rabbit.port"));

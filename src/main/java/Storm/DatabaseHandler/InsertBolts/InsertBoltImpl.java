@@ -95,5 +95,6 @@ public class InsertBoltImpl extends AbstractJdbcBolt {
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declareStream(Streams.ERROR.id(), new Fields("error_msg"));
         outputFieldsDeclarer.declareStream(Streams.ITEM.id(), new Fields("id", "values"));
+        outputFieldsDeclarer.declareStream(Streams.DROP.id(), new Fields("id", "values"));
     }
 }

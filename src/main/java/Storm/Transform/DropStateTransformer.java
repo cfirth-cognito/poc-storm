@@ -67,6 +67,7 @@ public class DropStateTransformer extends Transformer<DropState> {
 
         dropState.getSchedule().id = LookupHandler.getScheduleId(dropState.getRouteType().value, dropState.getRoute().value);
         dropState.getResource().id = LookupHandler.lookupId("resource_management_dh", "resource_ref", dropState.getResource().value);
+        dropState.getShop().id = dropState.getSchedule().id;
 
             /* Lookup ListObj */
         columns = new TreeMap<>();

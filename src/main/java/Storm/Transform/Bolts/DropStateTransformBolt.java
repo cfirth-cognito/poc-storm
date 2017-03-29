@@ -59,7 +59,7 @@ public class DropStateTransformBolt implements IRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declareStream(Streams.ITEM_STATE.id(), Storm.DatabaseHandler.DBObjects.ItemState.fields());
+        outputFieldsDeclarer.declareStream(Streams.DROP_STATE.id(), Storm.DatabaseHandler.DBObjects.DropState.fields());
         outputFieldsDeclarer.declareStream(Streams.ERROR.id(), new Fields("error_msg"));
     }
 

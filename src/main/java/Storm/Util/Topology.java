@@ -16,7 +16,9 @@ public enum Topology {
     DROP_TRANSFORM_BOLT("drop_transform_bolt"),
     DROP_STATE_TRANSFORM_BOLT("drop_state_transform_bolt"),
     SEQUENCING_BOLT("sequencing_bolt"),
-    ITEM_PERSIST_BOLT("item_persist_bolt");
+    ITEM_PERSIST_BOLT("item_persist_bolt"),
+    DROP_PERSIST_BOLT("drop_persist_bolt"),
+    DROP_STATE_PERSIST_BOLT("drop_state_persist_bolt");
 
     private String id;
 

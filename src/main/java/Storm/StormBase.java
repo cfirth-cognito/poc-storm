@@ -87,19 +87,12 @@ public class StormBase {
 
         log.info("Starting Storm..");
 
-        /* Generic Processing Bolts */
-
-        ParseAMQPBolt parseAMQPBolt = new ParseAMQPBolt();
-        builder.setBolt(Topology.PARSE_BOLT.getId(), parseAMQPBolt)
-                .shuffleGrouping(Topology.ITEM_SPOUT.getId(), Streams.ITEM.id())
-                .shuffleGrouping(Topology.ITEM_STATE_SPOUT.getId(), Streams.ITEM_STATE.id())
-                .shuffleGrouping(Topology.DROP_SPOUT.getId(), Streams.DROP.id())
-                .shuffleGrouping(Topology.SEQUENCING_BOLT.getId(), Streams.ITEM_STATE.id());
 
 //                .shuffleGrouping("ListAMQPSpout", "list");
 
         /* Build Topology */
 
+        builder = buildBaseTopology(builder);
         builder = buildItemTopology(builder);
         builder = buildItemStateTopology(builder);
         builder = buildDropTopology(builder);
@@ -129,6 +122,24 @@ public class StormBase {
 
     }
 
+
+    /* Generic Processing Bolts */
+    private static TopologyBuilder buildBaseTopology(TopologyBuilder builder) {
+        ParseAMQPBolt parseAMQPBolt = new ParseAMQPBolt();
+        builder.setBolt(Topology.PARSE_BOLT.getId(), parseAMQPBolt)
+                .shuffleGrouping(Topology.ITEM_SPOUT.getId(), Streams.ITEM.id())
+                .shuffleGrouping(Topology.ITEM_STATE_SPOUT.getId(), Streams.ITEM_STATE.id())
+                .shuffleGrouping(Topology.DROP_SPOUT.getId(), Streams.DROP.id())
+                .shuffleGrouping(Topology.SEQUENCING_BOLT.getId(), Streams.ITEM_STATE.id());
+
+        builder.setBolt(Topology.SEQUENCING_BOLT.getId(), sequencingBolt)
+                .shuffleGrouping(Topology.ITEM_PERSIST_BOLT.getId(), Streams.ITEM.id())
+                .shuffleGrouping(Topology.PARSE_BOLT.getId(), Streams.ITEM_STATE.id())
+//                .shuffleGrouping(Topology.DROP_PERSIST_BOLT.getId(), Streams.DROP.id())
+                .shuffleGrouping(Topology.PARSE_BOLT.getId(), Streams.DROP_STATE.id());
+        return builder;
+    }
+
     private static TopologyBuilder buildItemTopology(TopologyBuilder builder) {
         itemPersistenceBolt = new InsertBoltImpl(connectionProvider, itemJdbcMapper)
                 .withInsertQuery("insert into inv_item_d (" + Item.columnsToString() + ") values (" + Item.getPlaceholders() + ")")
@@ -139,9 +150,9 @@ public class StormBase {
                 .shuffleGrouping(Topology.PARSE_BOLT.getId(), Streams.ITEM.id());
         builder.setBolt(Topology.ITEM_PERSIST_BOLT.getId(), itemPersistenceBolt)
                 .shuffleGrouping(Topology.ITEM_TRANSFORM_BOLT.getId(), Streams.ITEM.id());
-        builder.setBolt(Topology.SEQUENCING_BOLT.getId(), sequencingBolt)
-                .shuffleGrouping(Topology.ITEM_PERSIST_BOLT.getId(), Streams.ITEM.id())
-                .shuffleGrouping(Topology.PARSE_BOLT.getId(), Streams.ITEM_STATE.id());
+//        builder.setBolt(Topology.SEQUENCING_BOLT.getId(), sequencingBolt)
+//                .shuffleGrouping(Topology.ITEM_PERSIST_BOLT.getId(), Streams.ITEM.id())
+//                .shuffleGrouping(Topology.PARSE_BOLT.getId(), Streams.ITEM_STATE.id());
 
         return builder;
     }
@@ -168,24 +179,24 @@ public class StormBase {
         builder.setSpout(Topology.DROP_SPOUT.getId(), dropAMQPSpout);
         builder.setBolt(Topology.DROP_TRANSFORM_BOLT.getId(), dropTransformBolt)
                 .shuffleGrouping(Topology.PARSE_BOLT.getId(), Streams.DROP.id());
-        builder.setBolt(Topology.ITEM_PERSIST_BOLT.getId(), dropPersistenceBolt)
+        builder.setBolt(Topology.DROP_PERSIST_BOLT.getId(), dropPersistenceBolt)
                 .shuffleGrouping(Topology.DROP_TRANSFORM_BOLT.getId(), Streams.DROP.id());
-        builder.setBolt(Topology.SEQUENCING_BOLT.getId(), sequencingBolt)
-                .shuffleGrouping(Topology.ITEM_PERSIST_BOLT.getId(), Streams.DROP.id())
-                .shuffleGrouping(Topology.PARSE_BOLT.getId(), Streams.DROP_STATE.id());
+//        builder.setBolt(Topology.SEQUENCING_BOLT.getId(), sequencingBolt)
+//                .shuffleGrouping(Topology.DROP_PERSIST_BOLT.getId(), Streams.DROP.id())
+//                .shuffleGrouping(Topology.PARSE_BOLT.getId(), Streams.DROP_STATE.id());
 
         return builder;
     }
 
     private static TopologyBuilder buildDropStateTopology(TopologyBuilder builder) {
-        dropStatePersistenceBolt = new InsertBoltImpl(connectionProvider, itemStateJdbcMapper)
+        dropStatePersistenceBolt = new InsertBoltImpl(connectionProvider, dropStateJdbcMapper)
                 .withInsertQuery("insert into drop_state_f (" + DropState.columnsToString() + ") values (" + DropState.getPlaceholders() + ")")
                 .withQueryTimeoutSecs(30);
 
         builder.setSpout(Topology.DROP_STATE_SPOUT.getId(), dropStateAMQPSpout);
         builder.setBolt(Topology.DROP_STATE_TRANSFORM_BOLT.getId(), dropStateTransformBolt)
                 .shuffleGrouping(Topology.SEQUENCING_BOLT.getId(), "drop-state-cont");
-        builder.setBolt("drop_state_persistence_bolt", dropStatePersistenceBolt)
+        builder.setBolt(Topology.DROP_STATE_PERSIST_BOLT.getId(), dropStatePersistenceBolt)
                 .shuffleGrouping(Topology.DROP_STATE_TRANSFORM_BOLT.getId(), Streams.DROP_STATE.id());
         return builder;
     }
