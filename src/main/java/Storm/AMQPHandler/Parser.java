@@ -136,7 +136,7 @@ public class Parser {
         dropState.setValidity(parseByPath(payload, "$.transitionMetaDataView.geographicCoordinates.validity"));
         dropState.setDuration(parseByPath(payload, "$.transitionMetaDataView.parameters.Duration"));
         dropState.setCustomerName(parseByPath(payload, "$.contactDetails.customerName"));
-        dropState.setDesignRank("$.transitionMetaDataView.parameters.DesignRank");
+        dropState.setDesignRank(parseByPath(payload, "$.transitionMetaDataView.parameters.DesignRank"));
         dropState.getOutcomeClass().value = (parseByPath(payload, "$.transitionMetaDataView.outcomeCode", "N/A"));
         dropState.getOutcomeSubClass().value = parseByPath(payload, "$.transitionMetaDataView.outcomeText", "N/A");
 
@@ -223,8 +223,8 @@ public class Parser {
             return "Event Date failed validation";
         if (StringUtils.isEmpty(drop.getRouteType()))
             return "Route Type failed validation";
-        if (StringUtils.isEmpty(drop.getShopId().value))
-            return "Shop ID failed validation";
+//        if (StringUtils.isEmpty(drop.getShopId().value))
+//            return "Shop ID failed validation";
         if (StringUtils.isEmpty(drop.getRoute().value))
             return "Route ID failed validation";
 
@@ -246,8 +246,8 @@ public class Parser {
             return "Route Type failed validation";
         if (StringUtils.isEmpty(dropState.getBillingRef()))
             return "Billing Ref failed validation";
-        if (StringUtils.isEmpty(dropState.getShop().value))
-            return "Shop ID failed validation";
+//        if (StringUtils.isEmpty(dropState.getShop().value))
+//            return "Shop ID failed validation";
         if (StringUtils.isEmpty(dropState.getRoute().value))
             return "Route ID failed validation";
         if (StringUtils.isEmpty(dropState.getLat()))
@@ -262,7 +262,7 @@ public class Parser {
 
     private String parseByPath(String msg, String path) {
         try {
-            return JsonPath.parse(msg).read(path);
+            return String.valueOf(JsonPath.parse(msg).read(path));
         } catch (PathNotFoundException e) {
             if (e.getMessage().contains("'null")) { // Null value in JSON - valid, handle properly
                 log.debug("Gracefully handling a null json value in message");

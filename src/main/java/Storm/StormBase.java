@@ -130,6 +130,7 @@ public class StormBase {
                 .shuffleGrouping(Topology.ITEM_SPOUT.getId(), Streams.ITEM.id())
                 .shuffleGrouping(Topology.ITEM_STATE_SPOUT.getId(), Streams.ITEM_STATE.id())
                 .shuffleGrouping(Topology.DROP_SPOUT.getId(), Streams.DROP.id())
+                .shuffleGrouping(Topology.DROP_STATE_SPOUT.getId(), Streams.DROP_STATE.id())
                 .shuffleGrouping(Topology.SEQUENCING_BOLT.getId(), Streams.ITEM_STATE.id());
 
         builder.setBolt(Topology.SEQUENCING_BOLT.getId(), sequencingBolt)
@@ -222,10 +223,14 @@ public class StormBase {
     private static TopologyBuilder buildErrorTopology(TopologyBuilder builder) {
         ErrorBolt errorBolt = new ErrorBolt();
         builder.setBolt("error_bolt", errorBolt)
-                .shuffleGrouping(Topology.ITEM_PERSIST_BOLT.getId(), Streams.ERROR.id())
                 .shuffleGrouping(Topology.PARSE_BOLT.getId(), Streams.ERROR.id())
                 .shuffleGrouping(Topology.ITEM_TRANSFORM_BOLT.getId(), Streams.ERROR.id())
                 .shuffleGrouping(Topology.ITEM_STATE_TRANSFORM_BOLT.getId(), Streams.ERROR.id())
+                .shuffleGrouping(Topology.DROP_TRANSFORM_BOLT.getId(), Streams.ERROR.id())
+                .shuffleGrouping(Topology.DROP_STATE_TRANSFORM_BOLT.getId(), Streams.ERROR.id())
+                .shuffleGrouping(Topology.ITEM_PERSIST_BOLT.getId(), Streams.ERROR.id())
+                .shuffleGrouping(Topology.DROP_PERSIST_BOLT.getId(), Streams.ERROR.id())
+                .shuffleGrouping(Topology.DROP_STATE_PERSIST_BOLT.getId(), Streams.ERROR.id())
                 .shuffleGrouping("item_state_persistence_bolt", Streams.ERROR.id());
 
         return builder;

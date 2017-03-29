@@ -4,7 +4,7 @@ package Storm.Util;
  * Created by charlie on 21/03/17.
  */
 public enum Topology {
-    TOPOLOGY_NAME("MI-STORM-V0.1"),
+    TOPOLOGY_NAME("MI-STORM-V0_1"),
     ITEM_SPOUT("ItemAMQPSpout"),
     ITEM_STATE_SPOUT("ItemStateAMQPSpout"),
     DROP_SPOUT("DropAMQPSpout"),

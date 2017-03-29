@@ -2,7 +2,10 @@ package Storm.Transform;
 
 import Storm.AMQPHandler.JSONObjects.Drop;
 import Storm.DatabaseHandler.LookupHandler;
+import Storm.Transform.Bolts.DropTransformBolt;
 import org.apache.storm.tuple.Values;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -13,11 +16,15 @@ import java.util.TreeMap;
  * Created by charlie on 21/03/17.
  */
 public class DropTransformer extends Transformer<Drop> {
+    private static final Logger log = LoggerFactory.getLogger(DropTransformer.class);
 
     @Override
     public Values transform(Drop drop) throws SQLException, ClassNotFoundException {
+        log.warn("Transforming drop.");
+
         Map<String, String> columns = new TreeMap<>();
         columns.put("class_display", "String");
+        columns.put("subclass", "String");
         columns.put("subclass_display", "String");
 
         List<Object> returned = LookupHandler.customLookUp(
@@ -50,9 +57,10 @@ public class DropTransformer extends Transformer<Drop> {
         output.add(drop.getRoute().id);
         output.add(drop.getRouteType());
         output.add(drop.getShopId().value);
-        output.add(drop.getRoute().value);
+        output.add(Integer.valueOf(drop.getRoute().value));
 
         // return item as list of fields
+        log.warn("Emitting drop.");
         return output;
     }
 }

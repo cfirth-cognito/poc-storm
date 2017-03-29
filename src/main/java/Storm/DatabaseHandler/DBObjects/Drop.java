@@ -35,9 +35,9 @@ public class Drop {
         String columnString = "";
         for (Column col : columns) {
             if (columns.indexOf(col) != columns.size() - 1)
-                columnString += col.getColumnName() + ",";
+                columnString += "`" + col.getColumnName() + "`,";
             else
-                columnString += col.getColumnName();
+                columnString += "`" + col.getColumnName() + "`";
         }
         return columnString;
     }

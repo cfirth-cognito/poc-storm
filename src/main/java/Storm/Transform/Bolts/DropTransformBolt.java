@@ -43,7 +43,7 @@ public class DropTransformBolt implements IRichBolt {
         try {
             emitValues = transformer.transform(drop);
             _collector.emit(Streams.DROP.id(), tuple, emitValues);
-            _collector.ack(tuple);
+//            _collector.ack(tuple);
         } catch (Exception e) {
             if (e.getCause() != null)
                 _collector.emit(Streams.ERROR.id(), tuple, new Values(e.getCause().getMessage()));

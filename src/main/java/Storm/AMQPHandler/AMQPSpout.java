@@ -146,7 +146,7 @@ public class AMQPSpout implements IRichSpout {
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
-
+            log.warn("Outputting " + streamId);
             emitValues.add(msgBody);
             _collector.emit(streamId, emitValues, deliveryTag);
         }

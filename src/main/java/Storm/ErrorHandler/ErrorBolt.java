@@ -26,7 +26,7 @@ public class ErrorBolt implements IRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        log.error(String.format("Stream [%s]: Caught error with tuple. [Error Msg]: %s. Logged error in DB and ack'd offending tuple.", tuple.getSourceStreamId(),
+        log.error(String.format("Stream [%s]-[%s]: Caught error with tuple. [Error Msg]: %s. Logged error in DB and ack'd offending tuple.", tuple.getSourceStreamId(), tuple.getSourceComponent(),
                 tuple.getStringByField("error_msg")));
         _collector.fail(tuple);
 //        _collector.ack(tuple);

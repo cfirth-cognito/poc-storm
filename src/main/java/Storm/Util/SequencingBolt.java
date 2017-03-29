@@ -126,8 +126,10 @@ public class SequencingBolt implements IRichBolt {
 
                     if (!found)
                         _collector.ack(tuple);
-                } else
+                } else {
+                    log.warn("Skipped sequencing for drop_state");
                     _collector.emit("drop-state-cont", tuple, new Values(dropState));
+                }
                 break;
         }
     }

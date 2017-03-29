@@ -37,19 +37,23 @@ public class DropState {
     private String validity;
     private String duration;
     private String customerName;
-    private String designRank;
+    private Integer designRank;
     private Field outcomeClass = new Field();
     private Field outcomeSubClass = new Field();
 
     public DropState() {
     }
 
-    public String getDesignRank() {
+    public Integer getDesignRank() {
         return designRank;
     }
 
     public void setDesignRank(String designRank) {
-        this.designRank = designRank;
+        if (designRank != null) {
+            this.designRank = Integer.valueOf(designRank);
+        } else {
+            this.designRank = 0;
+        }
     }
 
     public String getReference() {

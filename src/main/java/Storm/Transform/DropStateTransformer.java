@@ -110,8 +110,8 @@ public class DropStateTransformer extends Transformer<DropState> {
 
         output.add(dropState.getShop().id);
         output.add(dropState.getRoute().id);
-        output.add(dropState.getLat());
-        output.add(dropState.getLongitude());
+        output.add(Double.valueOf(dropState.getLat()));
+        output.add(Double.valueOf(dropState.getLongitude()));
         output.add(dropState.getValidity());
         output.add(dropState.getDuration());
         output.add(dropState.getCustomerName());

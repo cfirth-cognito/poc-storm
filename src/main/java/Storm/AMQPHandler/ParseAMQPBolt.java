@@ -82,8 +82,13 @@ public class ParseAMQPBolt implements IRichBolt {
             case "drop-state":
                 DropState dropState = parser.parseDropState(msgBody);
                 String validation = parser.validateDropState(dropState);
-                if (validation == null) _collector.emit(Streams.DROP_STATE.id(), tuple, emitValues);
-                else _collector.emit(Streams.ERROR.id(), new Values("[DROP-STATE]" + validation));
+                if (validation == null) {
+                    log.warn("Emitting parsed drop_state");
+                    emitValues.add(dropState);
+                    _collector.emit(Streams.DROP_STATE.id(), tuple, emitValues);
+                } else {
+                    _collector.emit(Streams.ERROR.id(), new Values("[DROP-STATE]" + validation));
+                }
                 break;
         }
         _collector.ack(tuple);
