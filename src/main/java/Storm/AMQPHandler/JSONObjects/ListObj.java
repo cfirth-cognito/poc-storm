@@ -9,19 +9,60 @@ public class ListObj {
 
 
     private String reference;
-    private Field type = new Field();
-    private Field subType = new Field();
     private Field listClass = new Field();
+    private Field listSubClass = new Field();
+    private String listClassDisplay;
+    private String listSubclassClassDisplay;
     private String eventDate;
     private Field beginDate = new Field();
-    private Field schedueleRef = new Field();
-    private Field routeType = new Field();
+    private Field schedule = new Field();
     private Field resource = new Field();
-    private Field vanRouteId = new Field();
+    private Field routeType = new Field();
     private String availableDate;
+    private Integer sortOrder;
 
 
     public ListObj() {
+    }
+
+    public Field getListSubClass() {
+        return listSubClass;
+    }
+
+    public void setListSubClass(Field listSubClass) {
+        this.listSubClass = listSubClass;
+    }
+
+    public String getListSubclassClassDisplay() {
+        return listSubclassClassDisplay;
+    }
+
+    public void setListSubclassClassDisplay(String listSubclassClassDisplay) {
+        this.listSubclassClassDisplay = listSubclassClassDisplay;
+    }
+
+    public Field getResource() {
+        return resource;
+    }
+
+    public void setResource(Field resource) {
+        this.resource = resource;
+    }
+
+    public String getListClassDisplay() {
+        return listClassDisplay;
+    }
+
+    public void setListClassDisplay(String listClassDisplay) {
+        this.listClassDisplay = listClassDisplay;
+    }
+
+    public Integer getSortOrder() {
+        return sortOrder;
+    }
+
+    public void setSortOrder(Integer sortOrder) {
+        this.sortOrder = sortOrder;
     }
 
     public String getReference() {
@@ -30,22 +71,6 @@ public class ListObj {
 
     public void setReference(String reference) {
         this.reference = reference;
-    }
-
-    public Field getType() {
-        return type;
-    }
-
-    public void setType(Field type) {
-        this.type = type;
-    }
-
-    public Field getSubType() {
-        return subType;
-    }
-
-    public void setSubType(Field subType) {
-        this.subType = subType;
     }
 
     public Field getListClass() {
@@ -72,12 +97,12 @@ public class ListObj {
         this.beginDate = beginDate;
     }
 
-    public Field getSchedueleRef() {
-        return schedueleRef;
+    public Field getSchedule() {
+        return schedule;
     }
 
-    public void setSchedueleRef(Field schedueleRef) {
-        this.schedueleRef = schedueleRef;
+    public void setSchedule(Field schedule) {
+        this.schedule = schedule;
     }
 
     public Field getRouteType() {
@@ -86,22 +111,6 @@ public class ListObj {
 
     public void setRouteType(Field routeType) {
         this.routeType = routeType;
-    }
-
-    public Field getResource() {
-        return resource;
-    }
-
-    public void setResource(Field resource) {
-        this.resource = resource;
-    }
-
-    public Field getVanRouteId() {
-        return vanRouteId;
-    }
-
-    public void setVanRouteId(Field vanRouteId) {
-        this.vanRouteId = vanRouteId;
     }
 
     public String getAvailableDate() {

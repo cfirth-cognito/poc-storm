@@ -42,6 +42,17 @@ public class LookupHandler {
     }
 
     // Throw any exceptions we encounter. This ensure's the bolt worker is killed, and another bolt spun up to try again.
+
+    /**
+     * Simple lookup. Specify the table, and the column with which the value is looked up vs.
+     *
+     * @param table  Table to perform the lookup against
+     * @param column Column to assert against
+     * @param value  Value to look for
+     * @return Either the ID of the row found, or 1.
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     */
     public static int lookupId(String table, String column, String value) throws ClassNotFoundException, SQLException {
         String idLookupStatement = "SELECT id FROM (tbl) WHERE (col) = ?";
         Class.forName("com.mysql.jdbc.Driver");
@@ -66,6 +77,16 @@ public class LookupHandler {
         return 1; // Unknown
     }
 
+    /**
+     * More complex lookup. Allows to lookup an ID using multiple columns & values.
+     *
+     * @param table   Table to perform lookup against.
+     * @param columns Columns to assert against.
+     * @param values  Values to look for.
+     * @return ID of found row, or 1.
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     */
     public static int lookupId(String table, List<String> columns, List<String> values) throws ClassNotFoundException, SQLException {
         String idLookupStatement = "SELECT id FROM (tbl) WHERE";
         Class.forName("com.mysql.jdbc.Driver");
@@ -165,6 +186,15 @@ public class LookupHandler {
         return null; // Unknown
     }
 
+    /**
+     * Provide custom SQL, and the columns you then expect to be returned
+     *
+     * @param sql                  Custom SQL to execute against Database
+     * @param columnsBeingReturned Columns you expect to be returned in <Column, Type> format
+     * @return
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     */
     public static List<Object> customLookUp(String sql, Map<String, String> columnsBeingReturned) throws ClassNotFoundException, SQLException {
         Class.forName("com.mysql.jdbc.Driver");
         List<Object> data = new ArrayList<>();

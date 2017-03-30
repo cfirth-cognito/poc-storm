@@ -8,7 +8,9 @@ public enum Streams {
     ITEM("item"),
     ITEM_STATE("item-state"),
     DROP("drop"),
-    DROP_STATE("drop-state");
+    DROP_STATE("drop-state"),
+    LIST("list"),
+    LIST_STATE("list-state");
 
     private String streamId;
 

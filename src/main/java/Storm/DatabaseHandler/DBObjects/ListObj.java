@@ -10,7 +10,7 @@ import java.util.ArrayList;
 /**
  * Created by charlie on 17/02/17.
  */
-public class List {
+public class ListObj {
     private static java.util.List<Column> columns = Lists.newArrayList(
             new Column("inv_list_ref", Types.VARCHAR),
             new Column("inv_list_class", Types.VARCHAR),

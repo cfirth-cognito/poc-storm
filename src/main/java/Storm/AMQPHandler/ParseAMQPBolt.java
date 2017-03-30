@@ -63,7 +63,7 @@ public class ParseAMQPBolt implements IRichBolt {
                 ListObj listObj = parser.parseList(msgBody);
                 if (parser.validateList(listObj) == null) {
                     emitValues.add(listObj);
-                    _collector.emit("list", tuple, emitValues);
+                    _collector.emit(Streams.LIST.id(), tuple, emitValues);
                 } else {
                     _collector.emit(Streams.ERROR.id(), new Values("[LIST]" + parser.validateList(listObj)));
                 }
@@ -104,7 +104,7 @@ public class ParseAMQPBolt implements IRichBolt {
         outputFieldsDeclarer.declareStream(Streams.ITEM_STATE.id(), new Fields("item-state"));
         outputFieldsDeclarer.declareStream(Streams.DROP.id(), new Fields("drop"));
         outputFieldsDeclarer.declareStream(Streams.DROP_STATE.id(), new Fields("drop-state"));
-        outputFieldsDeclarer.declareStream("list", new Fields("list"));
+        outputFieldsDeclarer.declareStream(Streams.LIST.id(), new Fields("list"));
 
         outputFieldsDeclarer.declareStream(Streams.ERROR.id(), new Fields("error_msg"));
     }

@@ -3,7 +3,6 @@ package Storm.AMQPHandler;
 import Storm.AMQPHandler.JSONObjects.*;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
-import net.minidev.json.JSONArray;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,15 +78,20 @@ public class Parser {
         String payload = JsonPath.parse(msg).read("$.payload");
 
         listObj.setReference(parseByPath(payload, "$.listMetadata.reference"));
-        listObj.getType().value = parseByPath(payload, "$.listMetadata.type");
-        listObj.getSubType().value = parseByPath(payload, "$.listMetadata.subType");
+
+        /* These aren't actually used in the ListObj ETL? */
+//        listObj.getType().value = parseByPath(payload, "$.listMetadata.type");
+//        listObj.getSubType().value = parseByPath(payload, "$.listMetadata.subType");
+//        listObj.getVanRouteId().value = parseByPath(payload, "$.listMetadata.parameters.VanRouteId");
+        /*                                                  */
+
         listObj.getListClass().value = parseByPath(payload, "$.listMetadata.listClass");
         listObj.setEventDate(parseByPath(payload, "$.listMetadata.eventDate"));
         listObj.getBeginDate().value = parseByPath(payload, "$.beginDate");
-        listObj.getSchedueleRef().value = parseByPath(payload, "$.routeReference");
+        listObj.getSchedule().value = parseByPath(payload, "$.routeReference");
         listObj.getRouteType().value = parseByPath(payload, "$.routeType");
         listObj.getResource().value = parseByPath(payload, "$.listMetadata.parameters.ResourceRef");
-        listObj.getVanRouteId().value = parseByPath(payload, "$.listMetadata.parameters.VanRouteId");
+
 
         return listObj;
     }
@@ -200,13 +204,13 @@ public class Parser {
             return "BeginDate failed validation";
         if (listObj.getListClass().value == null)
             return "ListObj Class failed validation";
-        if (listObj.getType().value == null)
-            return "ListObj Type failed validation";
+//        if (listObj.getType().value == null)
+//            return "ListObj Type failed validation";
         if (listObj.getRouteType().value == null)
             return "Route Type failed validation";
         if (listObj.getEventDate() == null)
             return "Event Date failed validation";
-        if (listObj.getSchedueleRef().value == null)
+        if (listObj.getSchedule().value == null)
             return "Route Ref failed validation";
 
         return null;

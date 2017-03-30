@@ -16,6 +16,12 @@ public abstract class Transformer<T> {
 
     public abstract Values transform(T t) throws SQLException, ClassNotFoundException;
 
+    /**
+     * Transforms given date into correct format
+     *
+     * @param date
+     * @return
+     */
     String transformDate(String date) {
         System.out.println(date);
 
@@ -29,6 +35,12 @@ public abstract class Transformer<T> {
             return null;
     }
 
+    /**
+     * Transform integer day value into string value
+     *
+     * @param day String representation of Day
+     * @return
+     */
     String transformStatedDay(String day) {
         String statedDay;
         switch (day) {
@@ -59,6 +71,12 @@ public abstract class Transformer<T> {
         return statedDay;
     }
 
+    /**
+     * Parse time into AM or PM.
+     *
+     * @param time Integer representation of time
+     * @return AM/PM
+     */
     String transformStatedTime(String time) {
         int iTime;
         try {

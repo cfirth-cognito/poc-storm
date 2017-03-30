@@ -2,16 +2,10 @@ package Storm;
 
 import Storm.AMQPHandler.AMQPSpout;
 import Storm.AMQPHandler.ParseAMQPBolt;
-import Storm.DatabaseHandler.DBObjects.Drop;
-import Storm.DatabaseHandler.DBObjects.DropState;
-import Storm.DatabaseHandler.DBObjects.Item;
-import Storm.DatabaseHandler.DBObjects.ItemState;
+import Storm.DatabaseHandler.DBObjects.*;
 import Storm.DatabaseHandler.InsertBolts.InsertBoltImpl;
-import Storm.Transform.Bolts.DropStateTransformBolt;
-import Storm.Transform.Bolts.DropTransformBolt;
-import Storm.Transform.Bolts.ItemStateTransformBolt;
-import Storm.Transform.Bolts.ItemTransformBolt;
 import Storm.ErrorHandler.ErrorBolt;
+import Storm.Transform.Bolts.*;
 import Storm.Util.PropertiesHolder;
 import Storm.Util.SequencingBolt;
 import Storm.Util.Streams;
@@ -65,14 +59,15 @@ public class StormBase {
     private static JdbcMapper dropStateJdbcMapper;
     private static InsertBoltImpl dropStatePersistenceBolt;
 
+    /* ListObj Topology */
+    private static AMQPSpout listAMQPSpout;
+    private static ListTransformBolt listTransformBolt;
+    private static JdbcMapper listJdbcMapper;
+    private static InsertBoltImpl listPersistenceBolt;
+
 
     private static SequencingBolt sequencingBolt;
 
-    /* ListObj Topology */
-//    private static AMQPSpout listAMQPSpout;
-//    private static ItemTransformBolt listTransformBolt;
-//    private static JdbcMapper listJdbcMapper;
-//    private static InsertBoltImpl listPersistenceBolt;
 
     public static void main(String[] args) throws InterruptedException, IOException {
         TopologyBuilder builder = new TopologyBuilder();
@@ -87,9 +82,6 @@ public class StormBase {
 
         log.info("Starting Storm..");
 
-
-//                .shuffleGrouping("ListAMQPSpout", "list");
-
         /* Build Topology */
 
         builder = buildBaseTopology(builder);
@@ -97,6 +89,7 @@ public class StormBase {
         builder = buildItemStateTopology(builder);
         builder = buildDropTopology(builder);
         builder = buildDropStateTopology(builder);
+        builder = buildListTopology(builder);
         builder = buildErrorTopology(builder);
 
         log.info("Topology configured. Creating now..");
@@ -131,6 +124,7 @@ public class StormBase {
                 .shuffleGrouping(Topology.ITEM_STATE_SPOUT.getId(), Streams.ITEM_STATE.id())
                 .shuffleGrouping(Topology.DROP_SPOUT.getId(), Streams.DROP.id())
                 .shuffleGrouping(Topology.DROP_STATE_SPOUT.getId(), Streams.DROP_STATE.id())
+                .shuffleGrouping(Topology.LIST_SPOUT.getId(), Streams.LIST.id())
                 .shuffleGrouping(Topology.SEQUENCING_BOLT.getId(), Streams.ITEM_STATE.id());
 
         builder.setBolt(Topology.SEQUENCING_BOLT.getId(), sequencingBolt)
@@ -202,19 +196,19 @@ public class StormBase {
         return builder;
     }
 
-//    private static TopologyBuilder buildListTopology(TopologyBuilder builder) {
-//        listPersistenceBolt = new InsertBoltImpl(connectionProvider, listJdbcMapper)
-//                .withInsertQuery("insert into inv_list_d (" + List.columnsToString() + ") values (" + List.getPlaceholders() + ")")
-//                .withQueryTimeoutSecs(30);
-//
-//        builder.setSpout("ListAMQPSpout", listAMQPSpout);
-//        builder.setBolt("list_transform_bolt", listTransformBolt)
-//                .shuffleGrouping("parse_amqp_bolt", "list");
-//        builder.setBolt("persist_bolt", listPersistenceBolt)
-//                .shuffleGrouping("list_transform_bolt", "list");
-//
-//        return builder;
-//    }
+    private static TopologyBuilder buildListTopology(TopologyBuilder builder) {
+        listPersistenceBolt = new InsertBoltImpl(connectionProvider, listJdbcMapper)
+                .withInsertQuery("insert into inv_list_d (" + ListObj.columnsToString() + ") values (" + ListObj.getPlaceholders() + ")")
+                .withQueryTimeoutSecs(30);
+
+        builder.setSpout(Topology.LIST_SPOUT.getId(), listAMQPSpout);
+        builder.setBolt(Topology.LIST_TRANSFORM_BOLT.getId(), listTransformBolt)
+                .shuffleGrouping(Topology.PARSE_BOLT.getId(), Streams.LIST.id());
+        builder.setBolt(Topology.LIST_PERSIST_BOLT.getId(), listPersistenceBolt)
+                .shuffleGrouping(Topology.LIST_TRANSFORM_BOLT.getId(), Streams.LIST.id());
+
+        return builder;
+    }
 
 
     /* Error Handling */
@@ -257,10 +251,9 @@ public class StormBase {
         dropStateJdbcMapper = new SimpleJdbcMapper(DropState.getColumns());
 
 
-//        listAMQPSpout = new AMQPSpout(PropertiesHolder.rabbitHost, PropertiesHolder.rabbitPort, PropertiesHolder.rabbitVHost,
-//                PropertiesHolder.rabbitUser, PropertiesHolder.rabbitPass, PropertiesHolder.listQueue, "list");
-//        itemTransformBolt = new ItemTransformBolt();
-//        listJdbcMapper = new SimpleJdbcMapper(List.getColumns());
+        listAMQPSpout = new AMQPSpout(PropertiesHolder.listQueue, Streams.LIST.id());
+        listTransformBolt = new ListTransformBolt();
+        listJdbcMapper = new SimpleJdbcMapper(ListObj.getColumns());
     }
 }
 

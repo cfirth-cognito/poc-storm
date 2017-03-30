@@ -1,54 +1,65 @@
 package Storm.Transform;
 
+import Storm.AMQPHandler.JSONObjects.ListObj;
+import Storm.DatabaseHandler.LookupHandler;
 import org.apache.storm.tuple.Values;
 
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Created by charlie on 21/03/17.
  */
-public class ListTransformer<Obj> extends Transformer<Obj> {
+public class ListTransformer extends Transformer<ListObj> {
 
     @Override
-    public Values transform(Obj obj) throws SQLException, ClassNotFoundException {
-        //    Values transformList(ListObj listObj) {
-//        try {
-//
-//            listObj.getListClass().id = LookupHandler.lookupId("inv_list_class_type_d", Lists.asList("id", new String[]{"class_display", "subclass_display",
-//                    "sort_order", "subclass"}), Lists.asList(listObj.getListClass().value, new String[]{}));
-//            listObj.setItemSubClassDisplay(String.valueOf(LookupHandler.lookupId("inv_item_class_type_d", "subclass_display", listObj.getItemSubClass())));
-//            listObj.setClientId(LookupHandler.lookupId("clients_d", "client_code", listObj.getClient()));
-//            listObj.setScheduleId(LookupHandler.getScheduleId(listObj.getRouteType(), listObj.getRouteRef()));
-//
-//        } catch (ClassNotFoundException | SQLException e) {
-//            e.printStackTrace();
-//        }
-//
-//        listObj.setEventDate(listObj.getEventDate().replace("Z", "").replace("T", " "));
-//
-//        Values output = new Values();
-//        output.add(listObj.getReference());
-//        output.add(listObj.getItemClass());
-//        output.add(listObj.getItemSubClass());
-//        output.add(listObj.getStatus());
-//        output.add(listObj.getItemClassDisplay());
-//        output.add(listObj.getItemSubClassDisplay());
-//        output.add(listObj.getStatus());
-//        output.add(listObj.getReference());
-//        output.add(listObj.getStatedDay());
-//        output.add(listObj.getStatedTime());
-//        output.add(listObj.getClient());
-//        output.add(listObj.getCustomerName());
-//        output.add(listObj.getCustAddr());
-//        output.add(1);
-//        output.add(listObj.getEventDate());
-//        output.add(listObj.getScheduleId());
-//        output.add(listObj.getPostcode());
-//        output.add(listObj.getClientId());
-//        output.add(listObj.getRouteType());
-//
-//        // return item as listObj of fields
-//        return output;
-        return null;
+    public Values transform(ListObj listObj) throws SQLException, ClassNotFoundException {
+
+        listObj.setEventDate(transformDate(listObj.getEventDate()));
+        listObj.getBeginDate().value = transformDate(listObj.getBeginDate().value);
+        listObj.getSchedule().id = LookupHandler.getScheduleId(listObj.getRouteType().value, listObj.getSchedule().value);
+
+
+        Map<String, String> columns = new TreeMap<>();
+        columns.put("id", "String");
+        columns.put("class_display", "String");
+        columns.put("subclass_display", "String");
+        columns.put("sort_order", "Integer");
+        columns.put("subclass", "String");
+        List<Object> lookupResults = LookupHandler.customLookUp(
+                String.format("select %s " +
+                        "FROM inv_list_class_type_d " +
+                        "WHERE class = %s", columns.keySet().toString(), listObj.getListClass().value), columns);
+
+        if (lookupResults != null && !lookupResults.isEmpty()) {
+            listObj.getListClass().id = (int) lookupResults.get(0);
+            listObj.setListClassDisplay((String) lookupResults.get(1));
+            listObj.setListSubclassClassDisplay((String) lookupResults.get(2));
+            listObj.setSortOrder(Integer.valueOf((String) lookupResults.get(3)));
+            listObj.getListSubClass().value = (String) lookupResults.get(4);
+        } else {
+            listObj.getListClass().id = 1;
+            listObj.setListClassDisplay("Unknown");
+            listObj.setListSubclassClassDisplay("Unknown");
+            listObj.setSortOrder(1);
+            listObj.getListSubClass().value = "UNKNOWN";
+        }
+
+        listObj.getBeginDate().id = LookupHandler.lookupId("date_d", "full_date", listObj.getBeginDate().value);
+
+        Values output = new Values();
+        output.add(listObj.getReference());
+        output.add(listObj.getListClass().value);
+        output.add(listObj.getListClassDisplay());
+        output.add(listObj.getSortOrder());
+        output.add(listObj.getEventDate());
+        output.add(listObj.getBeginDate().value);
+        output.add(listObj.getSchedule().id);
+        output.add(listObj.getBeginDate().id);
+        output.add(listObj.getRouteType().value);
+
+        return output;
     }
 }
