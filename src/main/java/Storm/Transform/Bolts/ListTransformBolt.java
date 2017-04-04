@@ -62,7 +62,7 @@ public class ListTransformBolt implements IRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-//        outputFieldsDeclarer.declareStream(Streams.LIST.id(), Storm.DatabaseHandler.DBObjects.Item.fields());
+        outputFieldsDeclarer.declareStream(Streams.LIST.id(), Storm.DatabaseHandler.DBObjects.ListObj.fields());
         outputFieldsDeclarer.declareStream(Streams.ERROR.id(), new Fields("error_msg"));
 
     }
