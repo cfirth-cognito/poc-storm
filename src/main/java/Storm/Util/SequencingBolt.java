@@ -2,8 +2,6 @@ package Storm.Util;
 
 import Storm.AMQPHandler.JSONObjects.DropState;
 import Storm.AMQPHandler.JSONObjects.ItemState;
-import Storm.AMQPHandler.Parser;
-import Storm.DatabaseHandler.LookupHandler;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -18,7 +16,6 @@ import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -74,7 +71,7 @@ public class SequencingBolt implements IRichBolt {
                         String eventName = state.getString("eventname");
                         log.info("Processing result with event name of " + eventName);
                         if (eventName.equalsIgnoreCase("transitioned"))
-                            _collector.emit("item-state", tuple, new Values(state.getMap("parameters", String.class, String.class).get("state")));
+                            _collector.emit(Streams.ITEM_STATE.id(), tuple, new Values(state.getMap("parameters", String.class, String.class).get("state")));
                     }
                 }
 

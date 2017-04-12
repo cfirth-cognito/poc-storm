@@ -174,7 +174,7 @@ public class AMQPSpout implements IRichSpout {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        // add fault-tolerant retry logic in here (avoid infinite loop while still trying a message atleast once)
+        // add fault-tolerant retry logic in here (avoid infinite loop while still retrying a message atleast once)
     }
 
     @Override
@@ -183,7 +183,7 @@ public class AMQPSpout implements IRichSpout {
         outputFieldsDeclarer.declareStream(Streams.ITEM_STATE.id(), new Fields("body"));
         outputFieldsDeclarer.declareStream(Streams.DROP.id(), new Fields("body"));
         outputFieldsDeclarer.declareStream(Streams.DROP_STATE.id(), new Fields("body"));
-        outputFieldsDeclarer.declareStream("list", new Fields("body"));
+        outputFieldsDeclarer.declareStream(Streams.LIST.id(), new Fields("body"));
     }
 
     @Override
