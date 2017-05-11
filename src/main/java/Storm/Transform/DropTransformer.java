@@ -2,7 +2,6 @@ package Storm.Transform;
 
 import Storm.AMQPHandler.JSONObjects.Drop;
 import Storm.DatabaseHandler.LookupHandler;
-import Storm.Transform.Bolts.DropTransformBolt;
 import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +27,7 @@ public class DropTransformer extends Transformer<Drop> {
         columns.put("subclass_display", "String");
 
         List<Object> returned = LookupHandler.customLookUp(
-                "select class_display, subclass, subclass_display from drop_class_type_d where class = '" + drop.getDropClass().value + "'", columns);
+                "SELECT class_display, subclass, subclass_display FROM drop_class_type_d WHERE class = '" + drop.getDropClass().value + "'", columns);
         if (!returned.isEmpty()) {
             drop.setDropClassDisplay((String) returned.get(0));
             drop.getDropSubClass().value = (String) returned.get(1);

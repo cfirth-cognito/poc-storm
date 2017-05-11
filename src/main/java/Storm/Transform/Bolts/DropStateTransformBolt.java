@@ -35,15 +35,16 @@ public class DropStateTransformBolt implements IRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
+        log.info(String.format("[LOG-DROP STATE] Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
+
         Transformer<DropState> transformer = new DropStateTransformer();
         Values emitValues;
-        log.info(String.format("[LOG] DropState Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
-        DropState state;
-        state = (DropState) tuple.getValueByField("drop-state");
+        DropState state = (DropState) tuple.getValueByField("drop-state");
 
         try {
             emitValues = transformer.transform(state);
             _collector.emit(Streams.DROP_STATE.id(), tuple, emitValues);
+            _collector.ack(tuple);
         } catch (SQLException | ClassNotFoundException e) {
             if (e.getCause() != null)
                 _collector.emit(Streams.ERROR.id(), tuple, new Values(e.getCause().getMessage()));

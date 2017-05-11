@@ -1,9 +1,7 @@
 package Storm.Transform;
 
-import Storm.AMQPHandler.JSONObjects.Item;
 import Storm.AMQPHandler.JSONObjects.ItemState;
 import Storm.DatabaseHandler.LookupHandler;
-import Storm.Transform.Transformer;
 import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -12,15 +12,14 @@ import java.sql.SQLException;
 
 public abstract class Transformer<T> {
     private static final Logger log = LoggerFactory.getLogger(Transformer.class);
-    private static int DATE_LENGTH = 8;
 
     public abstract Values transform(T t) throws SQLException, ClassNotFoundException;
 
     /**
      * Transforms given date into correct format
      *
-     * @param date
-     * @return
+     * @param date Date to be transformed
+     * @return Transformed date as a String
      */
     String transformDate(String date) {
         System.out.println(date);
@@ -39,7 +38,7 @@ public abstract class Transformer<T> {
      * Transform integer day value into string value
      *
      * @param day String representation of Day
-     * @return
+     * @return MON/TUE/WED/THU/FRI/SAT/SUN
      */
     String transformStatedDay(String day) {
         String statedDay;

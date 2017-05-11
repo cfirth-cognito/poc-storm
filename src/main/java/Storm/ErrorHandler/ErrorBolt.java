@@ -28,7 +28,12 @@ public class ErrorBolt implements IRichBolt {
     public void execute(Tuple tuple) {
         log.error(String.format("Stream [%s]-[%s]: Caught error with tuple. [Error Msg]: %s. Logged error in DB and ack'd offending tuple.", tuple.getSourceStreamId(), tuple.getSourceComponent(),
                 tuple.getStringByField("error_msg")));
+
+        /* Retry or don't retry? */
+        /* Requires work. Some kind of scale of Error Severity to determine whether we attempt a retry?  */
+
         _collector.fail(tuple);
+
 //        _collector.ack(tuple);
     }
 

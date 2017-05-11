@@ -39,9 +39,9 @@ public class ItemStateTransformBolt implements IRichBolt {
         Values emitValues;
         ItemState state;
 
-        log.info(String.format("[LOG] ItemState Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
+        log.info(String.format("[LOG-ITEM STATE] Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
 
-        if (tuple.getSourceStreamId().equalsIgnoreCase("item")) {
+        if (tuple.getSourceStreamId().equalsIgnoreCase(Streams.ITEM.id())) {
             state = createItemStateCreatedObject(tuple);
         } else {
             state = (ItemState) tuple.getValueByField("item-state");

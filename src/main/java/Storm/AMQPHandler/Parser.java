@@ -79,7 +79,7 @@ public class Parser {
 
         listObj.setReference(parseByPath(payload, "$.listMetadata.reference"));
 
-        /* These aren't actually used in the ListObj ETL? */
+        /* These aren't actually used in the List ETL? */
 //        listObj.getType().value = parseByPath(payload, "$.listMetadata.type");
 //        listObj.getSubType().value = parseByPath(payload, "$.listMetadata.subType");
 //        listObj.getVanRouteId().value = parseByPath(payload, "$.listMetadata.parameters.VanRouteId");
@@ -156,7 +156,7 @@ public class Parser {
         return itemState;
     }
 
-    // Can do this in the Setters of the various Objects themselves.
+    // Can do this in the Setters of the various Objects themselves - however usually setters should never do any additional processing.
     // Doing it here for now, for visibility
     String validateItem(Item item) {
         if (item.getReference() == null)
@@ -205,7 +205,7 @@ public class Parser {
         if (listObj.getListClass().value == null)
             return "ListObj Class failed validation";
 //        if (listObj.getType().value == null)
-//            return "ListObj Type failed validation";
+//            return "List Type failed validation";
         if (listObj.getRouteType().value == null)
             return "Route Type failed validation";
         if (listObj.getEventDate() == null)

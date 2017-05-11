@@ -63,7 +63,7 @@ public class SequencingBolt implements IRichBolt {
                 /* Goto Cassandra. Check for waiting item states. Emit the messages into the usual Item State transformation */
                     Tuple item = (Tuple) tuple.getValueByField("values");
 
-                    query = String.format("SELECT * FROM cqrs.event where aggregateid = '%s' and aggregatetype = 'item';",
+                    query = String.format("SELECT * FROM cqrs.event WHERE aggregateid = '%s' AND aggregatetype = 'item';",
                             item.getStringByField("inv_item_ref"));
                     log.info("Checking for Item States for: " + item.getStringByField("inv_item_ref"));
                     resultSet = session.execute(query);

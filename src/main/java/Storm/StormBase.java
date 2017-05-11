@@ -71,14 +71,7 @@ public class StormBase {
 
     public static void main(String[] args) throws InterruptedException, IOException {
         TopologyBuilder builder = new TopologyBuilder();
-        Map<String, Object> configMap = new HashMap<>();
-        configMap.put("dataSourceClassName", "com.mysql.jdbc.jdbc2.optional.MysqlDataSource");
-        configMap.put("dataSource.url", String.format("jdbc:mysql://%s:%s/%s",
-                PropertiesHolder.databaseHost, PropertiesHolder.databasePort, PropertiesHolder.databaseSchema));
-        configMap.put("dataSource.user", PropertiesHolder.databaseUser);
-        configMap.put("dataSource.password", PropertiesHolder.databasePass);
-        connectionProvider = new HikariCPConnectionProvider(configMap);
-        defineTasks();
+        Map<String, Object> configMap = init();
 
         log.info("Starting Storm..");
 
@@ -94,14 +87,14 @@ public class StormBase {
 
         log.info("Topology configured. Creating now..");
         builder.createTopology();
+
         String production = PropertiesHolder.production;
 
-        System.out.println(production);
         if (production.equalsIgnoreCase("false")) {
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology(Topology.TOPOLOGY_NAME.getId(), configMap, builder.createTopology());
 
-            System.out.println("[LOG] Sleeping");
+            System.out.println("[LOG] Running in Local Mode. Sleeping....");
             Thread.sleep(1000000);
             cluster.shutdown();
         } else {
@@ -113,6 +106,43 @@ public class StormBase {
             }
         }
 
+    }
+
+    private static Map<String, Object> init() {
+        Map<String, Object> configMap = new HashMap<>();
+
+        configMap.put("dataSourceClassName", "com.mysql.jdbc.jdbc2.optional.MysqlDataSource");
+        configMap.put("dataSource.url", String.format("jdbc:mysql://%s:%s/%s",
+                PropertiesHolder.databaseHost, PropertiesHolder.databasePort, PropertiesHolder.databaseSchema));
+        configMap.put("dataSource.user", PropertiesHolder.databaseUser);
+        configMap.put("dataSource.password", PropertiesHolder.databasePass);
+        connectionProvider = new HikariCPConnectionProvider(configMap);
+
+        sequencingBolt = new SequencingBolt();
+
+        itemAMQPSpout = new AMQPSpout(PropertiesHolder.itemQueue, Streams.ITEM.id());
+        itemTransformBolt = new ItemTransformBolt();
+        itemJdbcMapper = new SimpleJdbcMapper(Item.getColumns());
+
+        itemStateAMQPSpout = new AMQPSpout(PropertiesHolder.itemStateQueue, Streams.ITEM_STATE.id());
+        itemStateTransformBolt = new ItemStateTransformBolt();
+        itemStateJdbcMapper = new SimpleJdbcMapper(ItemState.getColumns());
+
+
+        dropAMQPSpout = new AMQPSpout(PropertiesHolder.dropQueue, Streams.DROP.id());
+        dropTransformBolt = new DropTransformBolt();
+        dropJdbcMapper = new SimpleJdbcMapper(Drop.getColumns());
+
+        dropStateAMQPSpout = new AMQPSpout(PropertiesHolder.dropStateQueue, Streams.DROP_STATE.id());
+        dropStateTransformBolt = new DropStateTransformBolt();
+        dropStateJdbcMapper = new SimpleJdbcMapper(DropState.getColumns());
+
+
+        listAMQPSpout = new AMQPSpout(PropertiesHolder.listQueue, Streams.LIST.id());
+        listTransformBolt = new ListTransformBolt();
+        listJdbcMapper = new SimpleJdbcMapper(ListObj.getColumns());
+
+        return configMap;
     }
 
 
@@ -228,32 +258,6 @@ public class StormBase {
                 .shuffleGrouping("item_state_persistence_bolt", Streams.ERROR.id());
 
         return builder;
-    }
-
-    private static void defineTasks() {
-        sequencingBolt = new SequencingBolt();
-
-        itemAMQPSpout = new AMQPSpout(PropertiesHolder.itemQueue, Streams.ITEM.id());
-        itemTransformBolt = new ItemTransformBolt();
-        itemJdbcMapper = new SimpleJdbcMapper(Item.getColumns());
-
-        itemStateAMQPSpout = new AMQPSpout(PropertiesHolder.itemStateQueue, Streams.ITEM_STATE.id());
-        itemStateTransformBolt = new ItemStateTransformBolt();
-        itemStateJdbcMapper = new SimpleJdbcMapper(ItemState.getColumns());
-
-
-        dropAMQPSpout = new AMQPSpout(PropertiesHolder.dropQueue, Streams.DROP.id());
-        dropTransformBolt = new DropTransformBolt();
-        dropJdbcMapper = new SimpleJdbcMapper(Drop.getColumns());
-
-        dropStateAMQPSpout = new AMQPSpout(PropertiesHolder.dropStateQueue, Streams.DROP_STATE.id());
-        dropStateTransformBolt = new DropStateTransformBolt();
-        dropStateJdbcMapper = new SimpleJdbcMapper(DropState.getColumns());
-
-
-        listAMQPSpout = new AMQPSpout(PropertiesHolder.listQueue, Streams.LIST.id());
-        listTransformBolt = new ListTransformBolt();
-        listJdbcMapper = new SimpleJdbcMapper(ListObj.getColumns());
     }
 }
 

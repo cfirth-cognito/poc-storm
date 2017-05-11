@@ -38,7 +38,7 @@ public class DropTransformBolt implements IRichBolt {
         Values emitValues;
         Drop drop = (Drop) tuple.getValueByField("drop");
 
-        log.info(String.format("Transforming %s", tuple.getMessageId().toString()));
+        log.info(String.format("[LOG-DROP] Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
 
         try {
             emitValues = transformer.transform(drop);

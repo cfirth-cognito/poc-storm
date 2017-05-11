@@ -174,7 +174,7 @@ public class AMQPSpout implements IRichSpout {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        // add fault-tolerant retry logic in here (avoid infinite loop while still retrying a message atleast once)
+        // add fault-tolerant retry logic in here (avoid infinite loop while still retrying a message at least once)
     }
 
     @Override

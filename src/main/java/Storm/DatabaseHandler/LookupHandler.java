@@ -50,8 +50,6 @@ public class LookupHandler {
      * @param column Column to assert against
      * @param value  Value to look for
      * @return Either the ID of the row found, or 1.
-     * @throws ClassNotFoundException
-     * @throws SQLException
      */
     public static int lookupId(String table, String column, String value) throws ClassNotFoundException, SQLException {
         String idLookupStatement = "SELECT id FROM (tbl) WHERE (col) = ?";
@@ -84,8 +82,6 @@ public class LookupHandler {
      * @param columns Columns to assert against.
      * @param values  Values to look for.
      * @return ID of found row, or 1.
-     * @throws ClassNotFoundException
-     * @throws SQLException
      */
     public static int lookupId(String table, List<String> columns, List<String> values) throws ClassNotFoundException, SQLException {
         String idLookupStatement = "SELECT id FROM (tbl) WHERE";
@@ -151,8 +147,6 @@ public class LookupHandler {
      * @param id              ID or Reference to look up using
      * @param lookUpColumn    Column to look up using, (id / inv_{}_ref)
      * @return Values from the dimension in the same order as the requested columns
-     * @throws SQLException
-     * @throws ClassNotFoundException
      */
     public static List<Object> lookupDimension(String table, TreeMap<String, String> columnsToReturn, String id, String lookUpColumn) throws SQLException, ClassNotFoundException {
         String dimensionLookupStatement = "SELECT (cols) FROM (tbl) WHERE " + lookUpColumn + " = ?";
@@ -192,8 +186,6 @@ public class LookupHandler {
      * @param sql                  Custom SQL to execute against Database
      * @param columnsBeingReturned Columns you expect to be returned in <Column, Type> format
      * @return
-     * @throws ClassNotFoundException
-     * @throws SQLException
      */
     public static List<Object> customLookUp(String sql, Map<String, String> columnsBeingReturned) throws ClassNotFoundException, SQLException {
         Class.forName("com.mysql.jdbc.Driver");

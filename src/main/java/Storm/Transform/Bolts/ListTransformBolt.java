@@ -40,7 +40,7 @@ public class ListTransformBolt implements IRichBolt {
         Transformer<ListObj> transformer = new ListTransformer();
         Values emitValues;
 
-        log.info(String.format("Transforming %s", tuple.getMessageId().toString()));
+        log.info(String.format("[LOG-LIST] Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
 
         try {
             emitValues = transformer.transform(list);

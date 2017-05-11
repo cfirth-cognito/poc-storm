@@ -22,6 +22,7 @@ public class ItemTransformer extends Transformer<Item> {
             columns.put("subclass_display", "String");
             List<Object> returned = LookupHandler.customLookUp("select class_display, subclass_display from inv_item_class_type_d where class = '" + item.getItemClass() + "'" +
                     " AND subclass = '" + item.getItemSubClass() + "'", columns);
+
             if (!returned.isEmpty()) {
                 item.setItemClassDisplay((String) returned.get(0));
                 item.setItemSubClassDisplay((String) returned.get(1));
@@ -29,6 +30,7 @@ public class ItemTransformer extends Transformer<Item> {
                 item.setItemClassDisplay("Unknown");
                 item.setItemSubClassDisplay("Unknown");
             }
+
             item.setClientId(LookupHandler.lookupId("clients_d", "client_code", item.getClient()));
             item.setScheduleId(LookupHandler.getScheduleId(item.getRouteType(), item.getRouteRef()));
 

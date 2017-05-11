@@ -26,8 +26,8 @@ public class DropStateTransformer extends Transformer<DropState> {
         columns.put("drop_class", "String");
         columns.put("drop_subclass", "String");
         columns.put("drop_status", "String");
-        log.info("Looking up Item Dimension");
 
+        log.info("Looking up Drop Dimension");
         List<Object> dropDimension = LookupHandler.lookupDimension("drop_d", columns, dropState.getReference(), "drop_ref");
         if (dropDimension != null && !dropDimension.isEmpty()) {
             dropState.setDropID((Integer) dropDimension.get(0));

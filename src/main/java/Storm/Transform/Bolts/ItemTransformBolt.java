@@ -37,7 +37,7 @@ public class ItemTransformBolt implements IRichBolt {
         Transformer<Item> transformer = new ItemTransformer();
         Values emitValues;
 
-        log.info(String.format("Transforming %s", tuple.getMessageId().toString()));
+        log.info(String.format("[LOG-ITEM] Transforming %s \n Stream ID %s", tuple.getMessageId().toString(), tuple.getSourceStreamId()));
 
         try {
             emitValues = transformer.transform(item);
