@@ -2,11 +2,15 @@ package Storm.DatabaseHandler;
 
 
 import Storm.Util.PropertiesHolder;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Charlie on 28/01/2017.
@@ -21,6 +25,13 @@ public class LookupHandler {
 
     private static Connection connection;
     private static PreparedStatement stmt;
+
+    private static Cache<String, Object> lookupCache = CacheBuilder.newBuilder()
+            .expireAfterAccess(1, TimeUnit.MINUTES)
+            .concurrencyLevel(4)
+            .maximumSize(1000)
+            .build();
+
 
     private static Connection checkConnection() throws SQLException {
         try {
@@ -51,7 +62,7 @@ public class LookupHandler {
      * @param value  Value to look for
      * @return Either the ID of the row found, or 1.
      */
-    public static int lookupId(String table, String column, String value) throws ClassNotFoundException, SQLException {
+    public static int lookupId(String table, String column, String value) throws ClassNotFoundException, SQLException, ExecutionException {
         String idLookupStatement = "SELECT id FROM (tbl) WHERE (col) = ?";
         Class.forName("com.mysql.jdbc.Driver");
         connection = checkConnection();
@@ -63,11 +74,7 @@ public class LookupHandler {
             log.debug(String.format("Looking up from %s, column %s, value %s", table, column, value));
             stmt.setString(1, value);
 
-            ResultSet resultSet = stmt.executeQuery();
-
-            if (resultSet.next()) {
-                return resultSet.getInt(1);
-            }
+            return (int) lookUpQueryFromCache(stmt.toString()).get(0).getOrDefault("id", 1);
         } catch (SQLException | NullPointerException e) {
             log.debug(String.format("Caught Exception %s looking up id in table %s, column %s, value %s. Returning 1.",
                     e.getMessage(), table, column, value));
@@ -83,7 +90,7 @@ public class LookupHandler {
      * @param values  Values to look for.
      * @return ID of found row, or 1.
      */
-    public static int lookupId(String table, List<String> columns, List<String> values) throws ClassNotFoundException, SQLException {
+    public static int lookupId(String table, List<String> columns, List<String> values) throws ClassNotFoundException, SQLException, ExecutionException {
         String idLookupStatement = "SELECT id FROM (tbl) WHERE";
         Class.forName("com.mysql.jdbc.Driver");
         connection = checkConnection();
@@ -94,49 +101,31 @@ public class LookupHandler {
         }
         idLookupStatement = idLookupStatement.substring(0, idLookupStatement.length() - 4);
 
-        try {
-            stmt = connection.prepareStatement(idLookupStatement);
-            int count = 1;
-            for (String value : values) {
-                if (value == null || value.isEmpty())
-                    value = "N/A";
-                stmt.setString(count, value);
-                count++;
-            }
-
-            ResultSet resultSet = stmt.executeQuery();
-            if (resultSet.next()) {
-                return resultSet.getInt(1);
-            }
-        } catch (SQLException | NullPointerException e) {
-            log.error(String.format("Caught Exception %s looking up id in table %s, columns %s, values %s, query %s. Returning 1.",
-                    e.getMessage(), table, columns, values, idLookupStatement));
+        stmt = connection.prepareStatement(idLookupStatement);
+        int count = 1;
+        for (String value : values) {
+            if (value == null || value.isEmpty())
+                value = "N/A";
+            stmt.setString(count, value);
+            count++;
         }
-        return 1; // Unknown
+        ArrayList<Map<String, Object>> resultSet = lookUpQueryFromCache(stmt.toString());
+        return (int) resultSet.get(0).getOrDefault("id", 1);
+
     }
 
-    public static String lookupColumn(String table, String column, String wColumn, String value) throws SQLException, ClassNotFoundException {
+    public static String lookupColumn(String table, String column, String wColumn, String value) throws SQLException, ClassNotFoundException, ExecutionException {
         String idLookupStatement = "SELECT " + column + " FROM (tbl) WHERE (col) = ?";
         Class.forName("com.mysql.jdbc.Driver");
         connection = checkConnection();
 
         idLookupStatement = idLookupStatement.replace("(tbl)", table).replace("(col)", wColumn);
-        try {
-            stmt = connection.prepareStatement(idLookupStatement);
+        stmt = connection.prepareStatement(idLookupStatement);
 
-            log.debug(String.format("Looking up from %s, column %s, wColumn %s, value %s", table, column, wColumn, value));
-            stmt.setString(1, value);
+        log.debug(String.format("Looking up from %s, column %s, wColumn %s, value %s", table, column, wColumn, value));
+        stmt.setString(1, value);
 
-            ResultSet resultSet = stmt.executeQuery();
-
-            if (resultSet.next()) {
-                return resultSet.getString(1);
-            }
-        } catch (SQLException | NullPointerException e) {
-            log.debug(String.format("Caught Exception %s looking up id in table %s, column %s, value %s. Returning 1.",
-                    e.getMessage(), table, column, value));
-        }
-        return "Unknown"; // Unknown
+        return (String) lookUpQueryFromCache(stmt.toString()).get(0).getOrDefault(column, "Unknown");
     }
 
     /**
@@ -204,6 +193,30 @@ public class LookupHandler {
         return data;
     }
 
+    @SuppressWarnings("unchecked cast")
+    private static ArrayList<Map<String, Object>> lookUpQueryFromCache(String lookupStatement) throws ExecutionException {
+        return (ArrayList<Map<String, Object>>) lookupCache.get(lookupStatement, () -> {
+            ResultSet resultSet = stmt.executeQuery();
+            ResultSetMetaData md = resultSet.getMetaData();
+            ArrayList<HashMap<String, Object>> rows = new ArrayList<>();
+            int columnCount = md.getColumnCount();
+
+            while (resultSet.next()) {
+                HashMap<String, Object> row = new HashMap<>(columnCount);
+
+                for (int c = 1; c <= columnCount; ++c)
+                    row.put(md.getColumnName(c), resultSet.getObject(c));
+
+                rows.add(row);
+            }
+
+
+            return rows;
+
+        });
+    }
+
+
     private static Object getValue(String columnName, String type, ResultSet resultSet) throws SQLException {
         switch (type) {
             case "String":
@@ -218,7 +231,7 @@ public class LookupHandler {
         }
     }
 
-    public static ArrayList<Integer> lookUpDateTime(String timeStr) throws SQLException, ClassNotFoundException {
+    public static ArrayList<Integer> lookUpDateTime(String timeStr) throws SQLException, ClassNotFoundException, ExecutionException {
         ArrayList<Integer> toReturn = new ArrayList<>();
 
         // todo: just .length? instead of looking for Z/+/-
@@ -236,7 +249,7 @@ public class LookupHandler {
         return toReturn;
     }
 
-    public static int getScheduleId(String routeType, String routeRef) throws SQLException, ClassNotFoundException {
+    public static int getScheduleId(String routeType, String routeRef) throws SQLException, ClassNotFoundException, ExecutionException {
         switch (routeType) {
             case "VANROUTE":
                 return LookupHandler.lookupId("schedule_management_dh", "courier_round", routeRef);
@@ -249,5 +262,4 @@ public class LookupHandler {
                 return 1;
         }
     }
-
 }
